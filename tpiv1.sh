@@ -43,6 +43,22 @@ clear_start(){
  mkdir $path_tempfile
  return 1
 }
+clear_end(){
+ fmdd=$1
+ rm -rf $path_lsr
+ rm -rf $path_full
+ rm -rf $path_tempfile
+ mkdir $path_tempfile
+ rm -rf $path_temptxt
+ hadoop dfs -rmr .Trash/*
+ return 1
+}
+
+end_exit(){
+ in_end_exit=$1
+ echo "| ------------------------------- FINISH ------------------------------ |"
+ exit 1
+}
 
 tobyte(){ # read mb to byte
  inbyte=$1
@@ -172,91 +188,50 @@ done < $path_conf
   qs=$(($maxper-medper))
   qs=$(($qs*$total))
   qs=$(($qs/100))
-
-  count=0
-  #read total priority and active secondstroage
-  count=0
-  i=0
-  #Dropbox
-  while read line || [ -n "$line" ]
-  do
-    if [ "$count" -eq 0 ];then
-      totaldb=$(echo -n "$line" | wc -w)
-    elif [ "$count" -eq 1 ];then
-      for word in $line; do
-            dbactive[$i]=$word
-            i=$((i+1))
-       done
-       i=0
-     elif [ "$count" -eq 2 ];then
-      for word in $line; do
-            dbpri[$i]=$word
-            i=$((i+1))
-       done
-       i=0
-    fi
-    count=$((count+1))
-  done < active_Dropbox.txt
-  count=0  
-  #Box
-  while read line || [ -n "$line" ]
-  do
-    if [ "$count" -eq 0 ];then
-      totalbox=$(echo -n "$line" | wc -w)
-    elif [ "$count" -eq 1 ];then
-      for word in $line; do
-            boxactive[$i]=$word
-            i=$((i+1))
-       done
-       i=0
-     elif [ "$count" -eq 2 ];then
-      for word in $line; do
-            boxpri[$i]=$word
-            i=$((i+1))
-       done
-       i=0
-    fi
-    count=$((count+1))
-  done < active_Box.txt
-  count=0
-  #Googledrive
-  while read line || [ -n "$line" ]
-  do
-    if [ "$count" -eq 0 ];then
-      totalgdrive=$(echo -n "$line" | wc -w)
-    elif [ "$count" -eq 1 ];then
-      for word in $line; do
-            gdriveactive[$i]=$word
-            i=$((i+1))
-       done
-       i=0
-     elif [ "$count" -eq 2 ];then
-      for word in $line; do
-            gdrivepri[$i]=$word
-            i=$((i+1))
-       done
-       i=0
-    fi
-    count=$((count+1))
-  done < active_GoogleDrive.txt
-  count=0
-  #NAS
-  while read line || [ -n "$line" ]
-  do
-    if [ "$count" -eq 0 ];then
-      totalnas=$(echo -n "$line" | wc -w)
-    elif [ "$count" -eq 1 ];then
-      for word in $line; do
-            nasactive[$i]=$word
-            i=$((i+1))
-       done       
-    fi
-    count=$((count+1))
-  done < active_Nas.txt
-  count=0
-  i=0
+  
 
 
+  #choose 2nd Storage with priority
+  path=("active_Dropbox.txt" "active_Box.txt" "active_GoogleDrive.txt")
+  tLen=${#path[@]}
+  count=0
+  for (( i=0; i<${tLen}; i++ ));
+  do
+    line=$(awk 'END{print}' ${path[$i]})
+     for word in $line; do
+    if [ "$word" -ne 0 ];then
+              pri[$count]=$word
+        count=$((count+1))            
+          fi
+     done
+  done
+
+  prisort=($(printf '%s\n' "${pri[@]}"|sort))
+  count=1
+  for (( i=0; i<${tLen}; i++ ));
+  do
+    count=1
+    line=$(awk 'END{print}' ${path[$i]})
+     for word in $line; do
+      if [ "$word" -eq "${prisort[0]}" ] && [ "$word" -ne 0  ];then
+        if [ "${path[$i]}" = "active_Dropbox.txt" ];then
+          echo "Dropbox cloud $count"
+          tfile="token.pcs"       
+          java -jar Dropbox.jar account $tfile$count 
+        elif [ "${path[$i]}" = "active_Box.txt" ];then
+          echo "Box cloud $count"
+          java -jar box.jar $count account  
+        elif [ "${path[$i]}" = "active_GoogleDrive.txt" ];then
+          echo "GoogleDrive cloud $count"
+          java -jar gdrive.jar $count account
+        fi             
+      fi
+      count=$((count+1))
+     done
+  done
+
+  #check space of third party
+  
 
   
 
