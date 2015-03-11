@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #refreshtoken box and gdrive
-./managetoken
+#./managetoken
 
 echo "| ---------------------------- START SCRIPT --------------------------- |"
 echo " 			    ____  ____  ____ "
@@ -89,8 +89,11 @@ path_Dbox="/home/hadoop/TESAPI/TESTSCRIPT/Dropbox.jar"
 path_Box="/home/hadoop/TESAPI/TESTSCRIPT/box.jar"
 path_Gdrive="/home/hadoop/TESAPI/TESTSCRIPT/gdrive.jar"
 
-path_conf="/home/hadoop/test/set_Auto.txt"
-path_conf_a="/home/hadoop/test/conf_tpi_a.txt"
+path_conf="/home/hadoop/TESAPI/TESTSCRIPT/set_Auto.txt"
+path_conf_a1="/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt.txt"
+path_conf_a2="/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt"
+path_conf_a3="/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt"
+path_conf_a4="/home/hadoop/TESAPI/TESTSCRIPT/active_Nas.txt"
 
 path_cloud_a="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud.txt" 
 path_cloud1="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud1.txt" 
@@ -113,15 +116,19 @@ date2=$(date)
 nqs=0 #now queue size
 total=144120455168
 $onoff # on-off
-$maxper #max use space
-$medper #medium use space
-$minper #min use space
-$grate #Growth up rate
-$ltu #last time update
-$prob #probe checking
-$mfs # max file size
-$qs # queue size
+$maxper #max use space (%)
+$medper #medium use space (%)
+$minper #min use space (%)
+$grate #Growth up rate (%)
+$ltu #last time update (day)
+$prob #probe checking (day)
+$mfs # max file size (mb)
+$qs # queue size (mb)
 err=1 #error reading flag
+$totaldb #dropboxcount
+$totalbox #boxcount
+$totalgdrive #gcount
+$totalnas #nascount
 #$sp #space percent
 
 #start read configure
@@ -129,7 +136,7 @@ echo -ne "Reading configure..."
 value=$(<$path_conf)
 while read line || [ -n "$line" ]
 do
- 	onoff=$(awk -F' ' '{ print $1 }' <<< $line);
+ 	  onoff=$(awk -F' ' '{ print $1 }' <<< $line)
   	maxper=$(awk -F' ' '{ print $2 }' <<< $line)
   	medper=$(awk -F' ' '{ print $3 }' <<< $line)
   	minper=$(awk -F' ' '{ print $4 }' <<< $line)
@@ -139,7 +146,7 @@ do
   	mfs=$(awk -F' ' '{ print $8 }' <<< $line)   	
 done < $path_conf
 	#qs = max - mid	
-	checknumber $onoff
+	  checknumber $onoff
   	checknumber $maxper
   	checknumber $medper
   	checknumber $minper
@@ -165,3 +172,94 @@ done < $path_conf
   qs=$(($maxper-medper))
   qs=$(($qs*$total))
   qs=$(($qs/100))
+
+  count=0
+  #read total priority and active secondstroage
+  count=0
+  i=0
+  #Dropbox
+  while read line || [ -n "$line" ]
+  do
+    if [ "$count" -eq 0 ];then
+      totaldb=$(echo -n "$line" | wc -w)
+    elif [ "$count" -eq 1 ];then
+      for word in $line; do
+            dbactive[$i]=$word
+            i=$((i+1))
+       done
+       i=0
+     elif [ "$count" -eq 2 ];then
+      for word in $line; do
+            dbpri[$i]=$word
+            i=$((i+1))
+       done
+       i=0
+    fi
+    count=$((count+1))
+  done < active_Dropbox.txt
+  count=0  
+  #Box
+  while read line || [ -n "$line" ]
+  do
+    if [ "$count" -eq 0 ];then
+      totalbox=$(echo -n "$line" | wc -w)
+    elif [ "$count" -eq 1 ];then
+      for word in $line; do
+            boxactive[$i]=$word
+            i=$((i+1))
+       done
+       i=0
+     elif [ "$count" -eq 2 ];then
+      for word in $line; do
+            boxpri[$i]=$word
+            i=$((i+1))
+       done
+       i=0
+    fi
+    count=$((count+1))
+  done < active_Box.txt
+  count=0
+  #Googledrive
+  while read line || [ -n "$line" ]
+  do
+    if [ "$count" -eq 0 ];then
+      totalgdrive=$(echo -n "$line" | wc -w)
+    elif [ "$count" -eq 1 ];then
+      for word in $line; do
+            gdriveactive[$i]=$word
+            i=$((i+1))
+       done
+       i=0
+     elif [ "$count" -eq 2 ];then
+      for word in $line; do
+            gdrivepri[$i]=$word
+            i=$((i+1))
+       done
+       i=0
+    fi
+    count=$((count+1))
+  done < active_GoogleDrive.txt
+  count=0
+  #NAS
+  while read line || [ -n "$line" ]
+  do
+    if [ "$count" -eq 0 ];then
+      totalnas=$(echo -n "$line" | wc -w)
+    elif [ "$count" -eq 1 ];then
+      for word in $line; do
+            nasactive[$i]=$word
+            i=$((i+1))
+       done       
+    fi
+    count=$((count+1))
+  done < active_Nas.txt
+  count=0
+  i=0
+
+
+
+  
+
+ 
+  
+
