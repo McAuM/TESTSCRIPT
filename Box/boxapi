@@ -1,0 +1,48 @@
+#!/bin/bash
+command="$1";
+client_id="qs9oulna0fakkkxjorbvc0bpv8113423"
+client_secret="tAtjbtmbkIp5n6vQsWBeX1SyOoYVq66M"
+
+while read line
+do
+	refresh_token="$line"
+done < refreshtoken
+#echo "refresh token = ${refresh_token}"
+
+curl "https://app.box.com/api/oauth2/token"  -d "grant_type=refresh_token&refresh_token=${refresh_token}&client_id=${client_id}&client_secret=${client_secret}"  -X "POST" -s | jq '.access_token' | cut -d'"' -f2 > token
+curl "https://app.box.com/api/oauth2/token"  -d "grant_type=refresh_token&refresh_token=${refresh_token}&client_id=${client_id}&client_secret=${client_secret}"  -X "POST" -s | jq '.refresh_token' | cut -d'"' -f2 > refreshtoken
+while read line2
+do
+	token_access="$line2"
+done < token
+#echo "access_token = $token_access"
+
+case $command in
+	-h| help ) shift
+		echo "              -----------BOXAPI------------               "
+		echo "Usage Command line"
+		echo "- help or -h 				show deteail command"
+		echo "- upload or -u				<file><parent_id>" 
+		echo "- dowload or -d				<file_id><newfile>"
+		echo "- delete or -del			<file_id>"
+		echo "- show or -ls 				<folder_id>"
+	;;
+	-u| upload )
+		curl "https://upload.box.com/api/2.0/files/content" -H "Authorization: Bearer ${token_access}" -F filename=@"${2}" -F parent_id="${3}"
+	;;
+	-del| delete)
+		curl "https://api.box.com/2.0/files/${2}" -H "Authorization: Bearer ${token_access}" -X "DELETE"
+	;;
+	-d | download )
+		curl -L "https://api.box.com/2.0/files/${2}/content" -H "Authorization: Bearer ${token_access}" > ${3}
+	;;
+	-ls | show)
+		curl "https://api.box.com/2.0/folders/${2}/items" -H "Authorization: Bearer ${token_access}"  -s | jq '.entries[] | {type,name,id}'
+	;;
+	* ) echo "ERROR";;
+esac
+#curl  "https://api.box.com/2.0/folders/0/items?limit=100&offset=0" -H "Authorization: Bearer ${access_token}" -s  |jq '.entries[] | {type, id,name}'  
+#curl -L "https://api.box.com/2.0/files/23781891417/content" -H "Authorization: Bearer ${token_access}" > aum2.txt
+#curl "https://upload.box.com/api/2.0/files/content" -H "Authorization: Bearer ${1}" -F filename=@aum2.txt -F parent_id=0
+#curl "https://api.box.com/2.0/files/23770773531"  -H "Authorization: Bearer ${1}"  -X "DELETE"
+

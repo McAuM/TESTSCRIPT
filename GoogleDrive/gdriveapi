@@ -1,0 +1,42 @@
+#!/bin/bash
+command="$1"
+access_token="ya29.JwG0_dXBTeHEDrwlCHdDvGyXGQCE4bcaLk56fapp3n1wQe_D4-G-2MdQh8XY3gusWpuZNMqPSyJKZg"
+case $command in
+	-h| help ) shift
+		echo "          -----------GOOGLEDRIVE API------------               "
+		echo "Usage Command line"
+		echo "- help or -h 				show deteail command"
+		echo "- upload or -u				<filename><parent_id>" 
+		echo "- dowload or -d				<filename><newfile>"
+		echo "- delete or -del			<filename>"
+		echo "- show or -ls 				<folder_id>"
+	;;
+	-u| upload )
+		curl -X POST https://www.googleapis.com/upload/drive/v2/files?uploadType=multipart -H "Authorization: Bearer ${access_token}" -T "$2"
+		echo "Upload Complete"
+	;;
+	-del| delete)
+		curl "https://www.googleapis.com/drive/v2/files?q=title+%3d+%27${2}%27" -H "Authorization: Bearer ${access_token}" -s | jq '.items[0].id' | cut -d'"' -f2 > gdriveId
+		while read line
+		do
+	        	ID="$line"
+		done < gdriveId
+		curl "https://www.googleapis.com/drive/v2/files/${ID}" -H "Authorization: Bearer ${access_token}" -X "DELETE" -s
+		echo "Delete Complete"		
+	;;
+	-d | download ) 
+		curl "https://www.googleapis.com/drive/v2/files?q=title+%3d+%27${2}%27" -H "Authorization: Bearer ${access_token}" -s | jq '.items[0].downloadUrl' | cut -d'"' -f2 > gdriveURLDownload
+		while read line
+		do
+	        	URL="$line"
+		done < gdriveURLDownload
+		curl "${URL}" -H "Authorization: Bearer ${access_token}" -s > ${3}
+		echo "Download Complete"
+	;;
+	-ls | show)
+		curl "https://www.googleapis.com/drive/v2/files?q=%27${2}%27+in+parents" -H "Authorization: Bearer ${access_token}" -s | jq '.items[] | {id,title}'
+	;;
+	* ) echo "ERROR";;
+esac
+
+

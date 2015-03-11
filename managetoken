@@ -1,0 +1,17 @@
+#!/bin/bash
+
+./Box/refreshboxapi1
+./Box/refreshboxapi2
+./GoogleDrive/refreshgoogledriveapi
+
+rm -rf token.box1
+rm -rf token.box2
+rm -rf token.gdrive1
+rm -rf refreshtoken.box1
+rm -rf refreshtoken.box2
+
+cp Box/token.box1 token.box1
+cp Box/token.box2 token.box2
+cp Box/refreshtoken.box1 refreshtoken.box1
+cp Box/refreshtoken.box2 refreshtoken.box2
+cp GoogleDrive/token.gdrive1 token.gdrive1
