@@ -1,7 +1,7 @@
 Configured Capacity: 154816032768 (144.18 GB)
-Present Capacity: 144120197120 (134.22 GB)
-DFS Remaining: 143961874432 (134.07 GB)
-DFS Used: 158322688 (150.99 MB)
+Present Capacity: 144120037376 (134.22 GB)
+DFS Remaining: 143961669632 (134.07 GB)
+DFS Used: 158367744 (151.03 MB)
 DFS Used%: 0.11%
 Under replicated blocks: 0
 Blocks with corrupt replicas: 0
@@ -13,33 +13,33 @@ Datanodes available: 3 (3 total, 0 dead)
 Name: 10.35.30.226:50010
 Decommission Status : Normal
 Configured Capacity: 51605344256 (48.06 GB)
-DFS Used: 52772864 (50.33 MB)
-Non DFS Used: 3552522240 (3.31 GB)
-DFS Remaining: 48000049152(44.7 GB)
+DFS Used: 52789248 (50.34 MB)
+Non DFS Used: 3552575488 (3.31 GB)
+DFS Remaining: 47999979520(44.7 GB)
 DFS Used%: 0.1%
 DFS Remaining%: 93.01%
-Last contact: Tue Mar 10 00:10:49 ICT 2015
+Last contact: Thu Mar 12 17:28:39 ICT 2015
 
 
 Name: 10.35.30.151:50010
 Decommission Status : Normal
 Configured Capacity: 51605344256 (48.06 GB)
-DFS Used: 52772864 (50.33 MB)
-Non DFS Used: 3589562368 (3.34 GB)
-DFS Remaining: 47963009024(44.67 GB)
+DFS Used: 52785152 (50.34 MB)
+Non DFS Used: 3589615616 (3.34 GB)
+DFS Remaining: 47962943488(44.67 GB)
 DFS Used%: 0.1%
 DFS Remaining%: 92.94%
-Last contact: Tue Mar 10 00:10:49 ICT 2015
+Last contact: Thu Mar 12 17:28:40 ICT 2015
 
 
 Name: 10.35.30.250:50010
 Decommission Status : Normal
 Configured Capacity: 51605344256 (48.06 GB)
-DFS Used: 52776960 (50.33 MB)
-Non DFS Used: 3553751040 (3.31 GB)
-DFS Remaining: 47998816256(44.7 GB)
+DFS Used: 52793344 (50.35 MB)
+Non DFS Used: 3553804288 (3.31 GB)
+DFS Remaining: 47998746624(44.7 GB)
 DFS Used%: 0.1%
 DFS Remaining%: 93.01%
-Last contact: Tue Mar 10 00:10:49 ICT 2015
+Last contact: Thu Mar 12 17:28:39 ICT 2015
 
 

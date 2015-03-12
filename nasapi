@@ -1,0 +1,31 @@
+#!/bin/bash
+
+command="$1"
+sid=$(curl -X GET "http://10.35.27.214:5000/webapi/auth.cgi?api=SYNO.API.Auth&version=3&method=login&account=admin&passwd=admin&session=FileStation&format=cookie" -s | jq '.data.sid' | cut -d'"' -f2 )
+case $command in
+	-h | help ) shift
+		echo "          -----------NAS API------------               "
+		echo "Usage Command line"
+		echo "- help or -h 				show deteail command"
+		echo "- upload or -u				<filename><parent_id>" 
+		echo "- dowload or -d				<filename><newfile>"
+		echo "- delete or -del			<filename>"
+		echo "- show or -ls 				<folder_id>"
+	;;
+	-u | upload )
+		curl -X POST "http://10.35.27.214:5000/webapi/FileStation/api_upload.cgi?" -F _sid="${sid}" -F api="SYNO.FileStation.Upload" -F version="1" -F method="upload" -F dest_folder_path="${3}" -F create_parents="true" -F overwrite="true" -F file=@"${2}"
+		echo "Upload Complete"
+	;;
+	-del | delete)
+		curl -X GET "http://10.35.27.214:5000/webapi/FileStation/file_delete.cgi?api=SYNO.FileStation.Delete&version=1&method=delete&_sid=${sid}&path=${2}"
+		echo "Delete Complete"		
+	;;
+	-d | download ) 
+		curl -X GET "http://10.35.27.214:5000/webapi/FileStation/file_download.cgi?api=SYNO.FileStation.Download&version=1&method=download&_sid=${sid}&mode=download&path=${2}" -s > ${3}
+		echo "Download Complete"
+	;;
+	-ls | show)
+		curl -X GET "http://10.35.27.214:5000/webapi/FileStation/file_share.cgi?api=SYNO.FileStation.List&version=1&method=list&_sid=${sid}&additional=real_path%2Csize%2Cowner%2Ctime%2Cperm%2Ctype&folder_path=${2}" -s | jq '.data.files[] | {name, path}'
+	;;
+	* ) echo "ERROR";;
+esac

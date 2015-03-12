@@ -43,22 +43,6 @@ clear_start(){
  mkdir $path_tempfile
  return 1
 }
-clear_end(){
- fmdd=$1
- rm -rf $path_lsr
- rm -rf $path_full
- rm -rf $path_tempfile
- mkdir $path_tempfile
- rm -rf $path_temptxt
- hadoop dfs -rmr .Trash/*
- return 1
-}
-
-end_exit(){
- in_end_exit=$1
- echo "| ------------------------------- FINISH ------------------------------ |"
- exit 1
-}
 
 tobyte(){ # read mb to byte
  inbyte=$1
@@ -188,8 +172,6 @@ done < $path_conf
   qs=$(($maxper-medper))
   qs=$(($qs*$total))
   qs=$(($qs/100))
-  
-
 
   #choose 2nd Storage with priority
   path=("active_Dropbox.txt" "active_Box.txt" "active_GoogleDrive.txt")
@@ -230,8 +212,6 @@ done < $path_conf
      done
   done
 
-  #check space of third party
-  
 
   
 
