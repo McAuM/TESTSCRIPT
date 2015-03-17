@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #refreshtoken box and gdrive
-#./managetoken
+#sh /home/hadoop/TESAPI/TESTSCRIPT/managetoken
 
 echo "| ---------------------------- START SCRIPT --------------------------- |"
 echo " 			    ____  ____  ____ "
@@ -89,6 +89,8 @@ path_Dbox="/home/hadoop/TESAPI/TESTSCRIPT/Dropbox.jar"
 path_Box="/home/hadoop/TESAPI/TESTSCRIPT/box.jar"
 path_Gdrive="/home/hadoop/TESAPI/TESTSCRIPT/gdrive.jar"
 
+tfile="/home/hadoop/TESAPI/TESTSCRIPT/token.pcs" 
+
 path_conf="/home/hadoop/TESAPI/TESTSCRIPT/set_Auto.txt"
 path_conf_a1="/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt.txt"
 path_conf_a2="/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt"
@@ -125,11 +127,6 @@ $prob #probe checking (day)
 $mfs # max file size (mb)
 $qs # queue size (mb)
 err=1 #error reading flag
-$totaldb #dropboxcount
-$totalbox #boxcount
-$totalgdrive #gcount
-$totalnas #nascount
-#$sp #space percent
 
 #start read configure
 echo -ne "Reading configure..."
@@ -174,38 +171,58 @@ done < $path_conf
   qs=$(($qs/100))
 
   #choose 2nd Storage with priority
-  path=("active_Dropbox.txt" "active_Box.txt" "active_GoogleDrive.txt")
+  path=($path_conf_a1 $path_conf_a2 $path_conf_a3)
   tLen=${#path[@]}
   count=0
   for (( i=0; i<${tLen}; i++ ));
   do
     line=$(awk 'END{print}' ${path[$i]})
      for word in $line; do
-    if [ "$word" -ne 0 ];then
+       if [ "$word" -ne 0 ];then
               pri[$count]=$word
-        count=$((count+1))            
-          fi
+              count=$((count+1))            
+       fi
      done
   done
 
   prisort=($(printf '%s\n' "${pri[@]}"|sort))
-  count=1
+  p=${#prisort[@]} #count prisort array
+  p=$((p-1))
+  count=1 # count Account number
   for (( i=0; i<${tLen}; i++ ));
   do
     count=1
     line=$(awk 'END{print}' ${path[$i]})
      for word in $line; do
-      if [ "$word" -eq "${prisort[0]}" ] && [ "$word" -ne 0  ];then
-        if [ "${path[$i]}" = "active_Dropbox.txt" ];then
-          echo "Dropbox cloud $count"
-          tfile="token.pcs"       
-          java -jar Dropbox.jar account $tfile$count 
-        elif [ "${path[$i]}" = "active_Box.txt" ];then
-          echo "Box cloud $count"
-          java -jar box.jar $count account  
-        elif [ "${path[$i]}" = "active_GoogleDrive.txt" ];then
-          echo "GoogleDrive cloud $count"
-          java -jar gdrive.jar $count account
+      if [ "$word" -eq "${prisort[$p]}" ] && [ "$word" -ne 0  ];then
+        if [ "$i" -eq 0 ];then #Choose Dropbox          
+          $tfile=$tfile$count
+          #check usespaceper          
+          chper=$(java -jar $path_Dbox spaceper $tfile)
+          if [$chper -le 89]
+            $path_java=$path_Dbox
+            break            
+          else
+             p=$((p-1))
+          if          
+        elif [ "$i" -eq 1 ];then #Choose Box
+          #check usespaceper          
+          chper=$(java -jar $path_Box $count )
+          if [$chper -le 89]
+            $path_java=$path_Box
+            break            
+          else
+             p=$((p-1))
+          if 
+        elif [ "$i" -eq 2 ];then #Choose GoogleDrive          
+          #check usespaceper          
+          chper=$(java -jar $path_Gdrive $count spaceper)
+          if [$chper -le 89]
+            $path_java=$path_Gdrive
+            break            
+          else
+             p=$((p-1))
+          if 
         fi             
       fi
       count=$((count+1))
