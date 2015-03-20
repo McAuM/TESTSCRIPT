@@ -83,6 +83,7 @@ caluseper(){
  return 1
 }
 
+
 #variable set Path
 nowdatesystem=$(date +"%Y-%m-%d")
 path_Dbox="/home/hadoop/TESAPI/TESTSCRIPT/Dropbox.jar"
@@ -92,7 +93,7 @@ path_Gdrive="/home/hadoop/TESAPI/TESTSCRIPT/gdrive.jar"
 tfile="/home/hadoop/TESAPI/TESTSCRIPT/token.pcs" 
 
 path_conf="/home/hadoop/TESAPI/TESTSCRIPT/set_Auto.txt"
-path_conf_a1="/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt.txt"
+path_conf_a1="/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt"
 path_conf_a2="/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt"
 path_conf_a3="/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt"
 path_conf_a4="/home/hadoop/TESAPI/TESTSCRIPT/active_Nas.txt"
@@ -134,13 +135,14 @@ value=$(<$path_conf)
 while read line || [ -n "$line" ]
 do
  	  onoff=$(awk -F' ' '{ print $1 }' <<< $line)
-  	maxper=$(awk -F' ' '{ print $2 }' <<< $line)
-  	medper=$(awk -F' ' '{ print $3 }' <<< $line)
-  	minper=$(awk -F' ' '{ print $4 }' <<< $line)
-  	grate=$(awk -F' ' '{ print $5 }' <<< $line)
-  	prob=$(awk -F' ' '{ print $6 }' <<< $line)
-  	ltu=$(awk -F' ' '{ print $7 }' <<< $line)  	
-  	mfs=$(awk -F' ' '{ print $8 }' <<< $line)   	
+    active=$(awk -F' ' '{ print $2 }' <<< $line)
+  	maxper=$(awk -F' ' '{ print $3 }' <<< $line)
+  	medper=$(awk -F' ' '{ print $4 }' <<< $line)
+  	minper=$(awk -F' ' '{ print $5 }' <<< $line)
+  	grate=$(awk -F' ' '{ print $6 }' <<< $line)
+  	prob=$(awk -F' ' '{ print $7 }' <<< $line)
+  	ltu=$(awk -F' ' '{ print $8 }' <<< $line)  	
+  	mfs=$(awk -F' ' '{ print $9 }' <<< $line)   	
 done < $path_conf
 	#qs = max - mid	
 	  checknumber $onoff
@@ -160,6 +162,7 @@ done < $path_conf
 		echo "[OK]"
   fi
   echo -ne "Waiting for initial..."
+  
   #read local space to nowspaceper
   caluseper 100
  
@@ -174,60 +177,77 @@ done < $path_conf
   path=($path_conf_a1 $path_conf_a2 $path_conf_a3)
   tLen=${#path[@]}
   count=0
+  echo " "
   for (( i=0; i<${tLen}; i++ ));
   do
     line=$(awk 'END{print}' ${path[$i]})
+    #echo "Line: $line"
      for word in $line; do
-       if [ "$word" -ne 0 ];then
+      #echo "$word"
+       if [ "$word" -ne "0" ];then
               pri[$count]=$word
               count=$((count+1))            
-       fi
-     done
+       fi       
+     done     
   done
-
-  prisort=($(printf '%s\n' "${pri[@]}"|sort))
+  prisort=($(printf '%s\n' "${pri[@]}"|sort))  
   p=${#prisort[@]} #count prisort array
   p=$((p-1))
-  count=1 # count Account number
-  for (( i=0; i<${tLen}; i++ ));
-  do
-    count=1
-    line=$(awk 'END{print}' ${path[$i]})
-     for word in $line; do
-      if [ "$word" -eq "${prisort[$p]}" ] && [ "$word" -ne 0  ];then
-        if [ "$i" -eq 0 ];then #Choose Dropbox          
-          $tfile=$tfile$count
-          #check usespaceper          
-          chper=$(java -jar $path_Dbox spaceper $tfile)
-          if [$chper -le 89]
-            $path_java=$path_Dbox
-            break            
-          else
-             p=$((p-1))
-          if          
-        elif [ "$i" -eq 1 ];then #Choose Box
-          #check usespaceper          
-          chper=$(java -jar $path_Box $count )
-          if [$chper -le 89]
-            $path_java=$path_Box
-            break            
-          else
-             p=$((p-1))
-          if 
-        elif [ "$i" -eq 2 ];then #Choose GoogleDrive          
-          #check usespaceper          
-          chper=$(java -jar $path_Gdrive $count spaceper)
-          if [$chper -le 89]
-            $path_java=$path_Gdrive
-            break            
-          else
-             p=$((p-1))
-          if 
-        fi             
-      fi
-      count=$((count+1))
-     done
-  done
+  flag=0
+  #chper=79  
+  while [ "$flag" -ne 1 ]
+    do
+      count=1 # count Account number      
+      for (( i=0; i<${tLen} && ${flag}==0; i++ ));
+        do
+          count=1
+          line=$(awk 'END{print}' ${path[$i]})
+           for word in $line; do
+            if [ "$word" -eq "${prisort[$p]}" ] && [ "$word" -ne 0  ];then
+              if [ "$i" -eq 0 ];then #Choose Box                   
+                #check usespaceper
+                chper=$(java -jar $path_Box spaceper $count)                                          
+                if [ "$chper" -le 80 ];then
+                  Path_java=$path_Box
+                  flag=1                  
+                  break
+                else                  
+                  p=$((p-1))
+                  #chper=$((chper-20))
+                  break              
+                fi
+              elif [ "$i" -eq 1 ];then #Choose Dropbox                          
+                #check usespaceper          
+                chper=$(java -jar $path_Dbox spaceper $tfile$count)                                          
+                if [ "$chper" -le 80 ];then
+                  Path_java=$path_Dbox
+                  flag=1                  
+                  break
+                else                  
+                  p=$((p-1))
+                  #chper=$((chper-20))
+                  break              
+                fi         
+              elif [ "$i" -eq 2 ];then #Choose GoogleDrive          
+                #check usespaceper               
+                chper=$(java -jar $path_Gdrive spaceper $count)                                          
+                if [ "$chper" -le 80 ];then
+                  Path_java=$path_Gdrive
+                  flag=1                  
+                  break
+                else                  
+                  p=$((p-1))
+                  #chper=$((chper-20))
+                  break              
+                fi
+              fi             
+            fi
+            count=$((count+1))
+           done
+        done
+    done  
+  echo " "
+  echo "Path_java $Path_java ,account $count "  
 
 
   
