@@ -1,5 +1,7 @@
 #!/bin/bash
 
+hadoophome="/home/hadoop/hadoop-1.0.4/bin/hadoop"
+javahome="/usr/java/jdk1.7.0_09/bin/java"
 #refreshtoken box and gdrive
 #sh /home/hadoop/TESAPI/TESTSCRIPT/managetoken
 
@@ -44,6 +46,22 @@ clear_start(){
  return 1
 }
 
+clear_end(){
+ fmdd=$1
+ rm -rf $path_lsr
+ rm -rf $path_full
+ rm -rf $path_tempfile
+ mkdir $path_tempfile
+ rm -rf $path_temptxt
+ hadoop dfs -rmr .Trash/*
+ return 1
+}
+
+end_exit(){
+ in_end_exit=$1
+ echo "| ------------------------------- FINISH ------------------------------ |"
+ exit 1
+}
 tobyte(){ # read mb to byte
  inbyte=$1
  mulbyte=1024
@@ -79,7 +97,7 @@ caluseper(){
    fi
  done < $path_temptxt
 
- nowspaceper=$(($nowspaceper / 5 ))
+ nowspaceper=$(($nowspaceper / 4 ))
  return 1
 }
 
@@ -89,6 +107,7 @@ nowdatesystem=$(date +"%Y-%m-%d")
 path_Dbox="/home/hadoop/TESAPI/TESTSCRIPT/Dropbox.jar"
 path_Box="/home/hadoop/TESAPI/TESTSCRIPT/box.jar"
 path_Gdrive="/home/hadoop/TESAPI/TESTSCRIPT/gdrive.jar"
+path_Nas="/home/hadoop/TESAPI/TESTSCRIPT/nasapi"
 
 tfile="/home/hadoop/TESAPI/TESTSCRIPT/token.pcs" 
 
@@ -97,6 +116,7 @@ path_conf_a1="/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt"
 path_conf_a2="/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt"
 path_conf_a3="/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt"
 path_conf_a4="/home/hadoop/TESAPI/TESTSCRIPT/active_Nas.txt"
+path_conf_b="/home/hadoop/TESAPI/TESTSCRIPT/baseperformance.txt"
 
 path_cloud_a="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud.txt" 
 path_cloud1="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud1.txt" 
@@ -146,6 +166,7 @@ do
 done < $path_conf
 	#qs = max - mid	
 	  checknumber $onoff
+    checknumber $active
   	checknumber $maxper
   	checknumber $medper
   	checknumber $minper
@@ -162,7 +183,7 @@ done < $path_conf
 		echo "[OK]"
   fi
   echo -ne "Waiting for initial..."
-  
+   
   #read local space to nowspaceper
   caluseper 100
  
@@ -172,83 +193,190 @@ done < $path_conf
   qs=$(($maxper-medper))
   qs=$(($qs*$total))
   qs=$(($qs/100))
+  echo "[OK]"    
+  echo "$nowspaceper"
 
-  #choose 2nd Storage with priority
-  path=($path_conf_a1 $path_conf_a2 $path_conf_a3)
-  tLen=${#path[@]}
-  count=0
-  echo " "
-  for (( i=0; i<${tLen}; i++ ));
-  do
-    line=$(awk 'END{print}' ${path[$i]})
-    #echo "Line: $line"
-     for word in $line; do
-      #echo "$word"
-       if [ "$word" -ne "0" ];then
-              pri[$count]=$word
-              count=$((count+1))            
-       fi       
-     done     
-  done
-  prisort=($(printf '%s\n' "${pri[@]}"|sort))  
-  p=${#prisort[@]} #count prisort array
-  p=$((p-1))
-  flag=0
-  #chper=79  
-  while [ "$flag" -ne 1 ]
-    do
-      count=1 # count Account number      
-      for (( i=0; i<${tLen} && ${flag}==0; i++ ));
-        do
-          count=1
-          line=$(awk 'END{print}' ${path[$i]})
-           for word in $line; do
-            if [ "$word" -eq "${prisort[$p]}" ] && [ "$word" -ne 0  ];then
-              if [ "$i" -eq 0 ];then #Choose Box                   
-                #check usespaceper
-                chper=$(java -jar $path_Box spaceper $count)                                          
-                if [ "$chper" -le 80 ];then
-                  Path_java=$path_Box
-                  flag=1                  
-                  break
-                else                  
-                  p=$((p-1))
-                  #chper=$((chper-20))
-                  break              
-                fi
-              elif [ "$i" -eq 1 ];then #Choose Dropbox                          
-                #check usespaceper          
-                chper=$(java -jar $path_Dbox spaceper $tfile$count)                                          
-                if [ "$chper" -le 80 ];then
-                  Path_java=$path_Dbox
-                  flag=1                  
-                  break
-                else                  
-                  p=$((p-1))
-                  #chper=$((chper-20))
-                  break              
-                fi         
-              elif [ "$i" -eq 2 ];then #Choose GoogleDrive          
-                #check usespaceper               
-                chper=$(java -jar $path_Gdrive spaceper $count)                                          
-                if [ "$chper" -le 80 ];then
-                  Path_java=$path_Gdrive
-                  flag=1                  
-                  break
-                else                  
-                  p=$((p-1))
-                  #chper=$((chper-20))
-                  break              
-                fi
-              fi             
+  #START PROCCESS
+  if [ "$onoff" -eq "0" ]
+  then
+    echo "TPSI mode is >>off<<"
+  else
+    if [ "$nowspaceper" -lt "$maxper" ]
+    then
+      echo "less then 'space use' configure"      
+    else      
+      echo "START PROCESS"
+      #createpathfile fromlsr
+
+      #choose NAS
+      nonas=1
+      count1=1
+      chper=81
+      line=$(awk 'END{print}' $path_conf_a4)
+      for word in $line 
+      do 
+        if [ "$word" -ne 0 ]; then      
+          #chper=$(Call API NAS Spaceper)
+          if [ "$chper" -le 80 ];then
+              nonas=0
+              break
+          fi
+        fi
+        count1=$((count1+1))
+      done
+
+      #Choose Plublic Cloud when NAS FULL
+      if [ "$nonas" -ne 0 ] 
+      then
+        if [ "$active" -ne 0 ]  #Choose Priority
+        then
+          #choose 2nd Storage with priority
+          path=($path_conf_a1 $path_conf_a2 $path_conf_a3)
+          tLen=${#path[@]} 
+          count2=0
+          for (( i=0; i<${tLen} && ${nonas}==1; i++ ));
+          do
+            line=$(awk 'END{print}' ${path[$i]})    
+             for word in $line; do      
+               if [ "$word" -ne "0" ];then
+                      pri[$count2]=$word
+                      count2=$((count2+1))            
+               fi       
+             done     
+          done
+          prisort=($(printf '%s\n' "${pri[@]}"|sort))
+          p=${#prisort[@]} #count prisort array
+          p=$((p-1))  
+          flag=0
+          nocloud=0
+          chper=81
+          count2=1 # count Account number  
+          while [ "$flag" -ne 1 ] && [ "$nonas" -eq 1 ]
+            do                  
+              for (( i=0; i<${tLen} && ${flag}==0; i++ ));
+                do          
+                  count2=1
+                  line=$(awk 'END{print}' ${path[$i]})          
+                   for word in $line; do
+                    if [ "$p" -lt 0 ]; then
+                      flag=1
+                      nocloud=1
+                      break
+                    fi
+                    if [ "$word" = "${prisort[$p]}" ] && [ "$word" -ne 0  ];then
+                      if [ "$i" -eq 0 ];then #Choose Box                   
+                        #check usespaceper
+                        #chper=$(java -jar $path_Box spaceper $count)                                          
+                        if [ "$chper" -le 80 ];then
+                          Path_java=$path_Box
+                          flag=1                  
+                          break
+                        else                  
+                          p=$((p-1))                          
+                          break              
+                        fi
+                      elif [ "$i" -eq 1 ];then #Choose Dropbox                          
+                        #check usespaceper          
+                        #chper=$(java -jar $path_Dbox spaceper $tfile$count)                                          
+                        if [ "$chper" -le 80 ];then
+                          Path_java=$path_Dbox
+                          flag=1                  
+                          break
+                        else                  
+                          p=$((p-1))                          
+                          break              
+                        fi         
+                      elif [ "$i" -eq 2 ];then #Choose GoogleDrive          
+                        #check usespaceper               
+                        #chper=$(java -jar $path_Gdrive spaceper $count)                                          
+                        if [ "$chper" -le 80 ];then
+                          Path_java=$path_Gdrive
+                          flag=1                  
+                          break
+                        else                  
+                          p=$((p-1))                          
+                          break              
+                        fi
+                      fi             
+                    fi
+                    count2=$((count2+1))
+                   done           
+                done     
+            done
+          echo "Priority java $Path_java with account $count2"
+          if [ "$Path_java" =  "$path_Box" ]; then  
+            cmd="$javahome -jar $Path_java upload $count2"
+          elif [ "$Path_java" =  "$path_Dbox" ]; then
+            cmd="$javahome -jar $Path_java upload /home/hadoop/TESAPI/TESTSCRIPT/token.pcs$count2"
+          elif [ "$Path_java" =  "$path_Gdrive" ]; then
+            cmd="$javahome -jar $Path_java upload $count2"
+          fi                
+        else  #Choose base performace
+          nocloud=0
+          choose_base=0
+          min_score=99999
+          count=0
+          line1=$(sed -n 2p ${path_conf_b})
+          line2=$(sed -n 3p ${path_conf_b})
+          for word in $line2; do
+            account[count]=$word
+            count=$((count+1))
+          done
+          count=0
+          for word in $line1; do
+            if [ "$word" -lt "$min_score" ] &&  [ "${account[$count]}" -ne 0 ] ; then
+              min_score=$((word))
+              choose_base=$((count))
+              #echo "$count"
             fi
             count=$((count+1))
-           done
-        done
-    done  
-  echo " "
-  echo "Path_java $Path_java ,account $count "  
+          done
+          if [ "${account[0]}" -eq 0 ] && [ "${account[1]}" -eq 0 ] && [ "${account[2]}" -eq 0 ]
+          then
+            nocloud=1
+          else
+            if [ "$choose_base" -eq 0 ]
+            then
+              Path_java=$path_Box
+            elif [ "$choose_base" -eq 1 ]
+            then
+              Path_java=$path_Dbox
+            elif [ "$choose_base" -eq 2 ]
+            then
+              Path_java=$path_Gdrive
+            fi
+            count3=${account[$choose_base]}
+            echo "Base Performance java $Path_java with account $count3"          
+            if [ "$Path_java" =  "$path_Box" ]; then  
+              cmd="$javahome -jar $Path_java upload $count3"
+            elif [ "$Path_java" =  "$path_Dbox" ]; then
+              cmd="$javahome -jar $Path_java upload /home/hadoop/TESAPI/TESTSCRIPT/token.pcs$count3"
+            elif [ "$Path_java" =  "$path_Gdrive" ]; then
+              cmd="$javahome -jar $Path_java upload $count3"
+            fi  
+          fi              
+        fi
+      else
+          echo "NAS with Account $count1"
+          cmd="NASSSSS UPLOAD"
+          #Upload NAS
+      fi
+      ###############  END Choose Secondary Stroage
 
+      if [ "$nonas" -eq 1 ] &&  [ "$nocloud" -eq 1 ]
+      then
+        echo "FULLLL ALLL"
+      else
+        echo "$cmd"
+        echo "Choose FILE"
+      fi
+
+
+
+    fi    
+  fi 
+clear_end 1
+end_exit 1
 
   
 
