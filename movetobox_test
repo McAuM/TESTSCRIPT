@@ -1,0 +1,23 @@
+#!/bin/bash
+./refreshboxapi
+
+#find Size and LastUpdate
+find /home/hadoop/TESAPI/testmovebox/ -size -5000000c  > tmplistfile
+sed '1d' tmplistfile > quelistfile
+
+#add to list file and Upload to box
+count=0
+i=0
+while read line
+do
+       if [ "$count" -le 4000000 ]; then
+          listfile="$line"
+          size=$( stat -c %s "$listfile")
+          count=$((count+size))
+          #echo "$i+$size+$listfile"
+	  #i=$((i+1))
+	  java -jar box.jar upload "$listfile"
+       else
+	  break
+       fi
+done < quelistfile

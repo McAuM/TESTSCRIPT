@@ -10,7 +10,7 @@ path_conf_a1="/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt"
 path_conf_a2="/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt"
 path_conf_a3="/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt"
 
-dd if=/dev/zero of=upload_test bs=1M count=5
+dd if=/dev/zero of=/home/hadoop/TESAPI/TESTSCRIPT/upload_test bs=1M count=5
 
 path=($path_conf_a1 $path_conf_a2 $path_conf_a3)
 tLen=${#path[@]} 
@@ -23,14 +23,14 @@ do
    for word in $line; do   
      if [ "$word" -ne "0" ];then
      	if [ "$i" -eq 0 ]; then
-     		chper=81
-     		#chper=$(java -jar $path_Box spaceper $count)
+     		#chper=81
+     		chper=$(java -jar $path_Box spaceper $count)
      	elif [ "$i" -eq 1 ]; then
-     		chper=81
-     		#chper=$(java -jar $path_Dbox spaceper $tfile$count)
+     		#chper=81
+     		chper=$(java -jar $path_Dbox spaceper $tfile$count)
      	elif [ "$i" -eq 2 ]; then
-     		chper=81
-     		#chper=$(java -jar $path_Gdrive spaceper $count)
+     		#chper=81
+     		chper=$(java -jar $path_Gdrive spaceper $count)
      	fi    	
      	if [ "$chper" -lt 80 ]; then
             account[$count2]=$count
@@ -53,7 +53,7 @@ done
 	# Upload 
 	if [ "${account[0]}" -ne 0 ]; then
 		STARTTIME=$(date +%s)
-	        java -jar $path_Box  upload ${account[0]} /home/hadoop/TESAPI/TESTSCRIPT/upload_test 
+	        java -jar $path_Box  upload ${account[0]} /home/hadoop/TESAPI/TESTSCRIPT/upload_test /home/hadoop/TESAPI/TESTSCRIPT/upload_test
 	    ENDTIME=$(date +%s)
 	 	time[$count]=$(($ENDTIME - $STARTTIME))    
 	else 
@@ -73,7 +73,7 @@ done
 
 	if [ "${account[2]}" -ne 0 ]; then
 		STARTTIME=$(date +%s)
-	        java -jar $path_Gdrive  upload ${account[2]} /home/hadoop/TESAPI/TESTSCRIPT/upload_test ""
+	        java -jar $path_Gdrive  upload ${account[2]} /home/hadoop/TESAPI/TESTSCRIPT/upload_test /home/hadoop/TESAPI/TESTSCRIPT/upload_test
 	    ENDTIME=$(date +%s)
 	    time[$count]=$(($ENDTIME - $STARTTIME))
 	else
