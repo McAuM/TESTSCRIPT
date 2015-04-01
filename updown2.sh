@@ -1,4 +1,5 @@
 #!/bin/bash
+
 tobyte(){ # read mb to byte
  inbyte=$1
  mulbyte=1024
@@ -13,22 +14,9 @@ path_Gdrive="/home/hadoop/TESAPI/TESTSCRIPT/gdrive.jar"
 
 tfile="/home/hadoop/TESAPI/TESTSCRIPT/token.pcs" 
 
-path_conf="/home/hadoop/TESAPI/TESTSCRIPT/set_Auto.txt"
 path_conf_a1="/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt"
 path_conf_a2="/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt"
 path_conf_a3="/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt"
-
-while read line || [ -n "$line" ]
-do 	   
-  	maxper=$(awk -F' ' '{ print $3 }' <<< $line)
-  	medper=$(awk -F' ' '{ print $4 }' <<< $line)
-  	minper=$(awk -F' ' '{ print $5 }' <<< $line)  	
-done < $path_conf
-
-total=144118906880
-qs=$(($maxper-medper))
-qs=$(($qs*$total))
-qs=$(($qs/100))
 
 dd if=/dev/zero of=/home/hadoop/TESAPI/TESTSCRIPT/upload_test bs=1M count=5
 
@@ -44,17 +32,17 @@ do
      if [ "$word" -ne "0" ];then
      	if [ "$i" -eq 0 ]; then
      		#chper=81
-     		chper=$(java -jar $path_Box space $count | grep -i "free" | awk -F ' ' '{print $6}')
+     		chper=$(java -jar $path_Box space $count | grep -i "used" | awk -F ' ' '{print $6}')
      	elif [ "$i" -eq 1 ]; then
      		#chper=81
-     		chper=$(java -jar $path_Dbox space $tfile$count | grep -i "free" | awk -F ' ' '{print $6}')
+     		chper=$(java -jar $path_Dbox space $tfile$count | grep -i "used" | awk -F ' ' '{print $6}')
      	elif [ "$i" -eq 2 ]; then
      		#chper=81
-     		chper=$(java -jar $path_Gdrive space $count | grep -i "free" | awk -F ' ' '{print $6}')
+     		chper=$(java -jar $path_Gdrive space $count | grep -i "used" | awk -F ' ' '{print $6}')
      	fi
      	tobyte $chper
         chper=$outbyte    	
-     	if [ "$chper" -gt "$qs" ]; then
+     	if [ "$chper" -gt 0 ]; then
             account[$count2]=$count
             count2=$((count2+1))
             nocloud=1        
@@ -157,8 +145,8 @@ done
 	score_box=$(echo "((${time[0]}*30)+(${time2[0]}*70))/100" | bc)
 	score_Dbox=$(echo "((${time[1]}*30)+(${time2[1]}*70))/100" | bc)
 	score_gdrive=$(echo "((${time[2]}*30)+(${time2[2]}*70))/100" | bc)
-	echo "Box Dbox Gdrive" > /home/hadoop/TESAPI/TESTSCRIPT/baseperformance.txt
-	echo "$score_box $score_Dbox $score_gdrive" >>	/home/hadoop/TESAPI/TESTSCRIPT/baseperformance.txt
-	echo "${account[0]} ${account[1]} ${account[2]}" >>	/home/hadoop/TESAPI/TESTSCRIPT/baseperformance.txt
+	echo "Box Dbox Gdrive" > /home/hadoop/TESAPI/TESTSCRIPT/baseperformance2.txt
+	echo "$score_box $score_Dbox $score_gdrive" >>	/home/hadoop/TESAPI/TESTSCRIPT/baseperformance2.txt
+	echo "${account[0]} ${account[1]} ${account[2]}" >>	/home/hadoop/TESAPI/TESTSCRIPT/baseperformance2.txt
 
 exit 1

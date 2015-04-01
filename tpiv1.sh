@@ -40,7 +40,7 @@ createpathfile(){
 clear_start(){
  cs=$1
  rm -rf $path_lsr
- #rm -rf $path_full
+ rm -rf $path_full
  rm -rf $path_tempfile
  mkdir $path_tempfile
  return 1
@@ -49,7 +49,7 @@ clear_start(){
 clear_end(){
  fmdd=$1
  rm -rf $path_lsr
- #rm -rf $path_full
+ rm -rf $path_full
  rm -rf $path_tempfile
  mkdir $path_tempfile
  rm -rf $path_temptxt
@@ -96,11 +96,15 @@ caluseper(){
  do
    if [ `echo "$line" | grep -c "DFS Used%" ` -gt 0 ]
    then
+    
     linepath=$(awk -F' ' '{ print $3 }' <<< $line)
     linepath2=$(awk -F'%' '{ print $1 }' <<< $linepath)
     linepath2=$(awk -F'.' '{ print $1 }' <<< $linepath2)
     linepath3=$((($linepath3 + 1) - 1)) # cut zero padding
-    nowspaceper=$(($nowspaceper + $linepath3))
+    #echo "linepath2 -- $linepath2"
+    #echo "linepath3 -- $linepath3"
+    nowspaceper=$(($nowspaceper + $linepath2))
+    #echo "nowspaceper----$nowspaceper"
    fi
  done < $path_temptxt
 
@@ -150,10 +154,11 @@ path_conf_a3="/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt"
 path_conf_a4="/home/hadoop/TESAPI/TESTSCRIPT/active_Nas.txt"
 path_conf_b="/home/hadoop/TESAPI/TESTSCRIPT/baseperformance.txt"
 
-path_cloud_a="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud_All.txt" 
-#path_cloud1="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud1.txt" 
-#path_cloud2="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud2.txt" 
-#path_cloud3="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud3.txt" 
+path_file_a="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud_All.txt" 
+path_file_NAS="/home/hadoop/TESAPI/TESTSCRIPT/in_NAS" 
+path_file_box="/home/hadoop/TESAPI/TESTSCRIPT/in_box" 
+path_file_Dbox="/home/hadoop/TESAPI/TESTSCRIPT/in_Dbox" 
+path_file_gdrive="/home/hadoop/TESAPI/TESTSCRIPT/in_gdrive" 
 path_toupload="wait to change"
 
 path_lsr="/home/hadoop/TESAPI/TESTSCRIPT/full-lsr.txt"
@@ -163,13 +168,16 @@ path_tempfile="/home/hadoop/TESAPI/TESTSCRIPT/tempfile"
 
 date_log=$(date +"%Y-%m-%d")
 #path_log="/home/hadoop/test/log-tpi-$date_log.txt" # keep log by date
-path_log="/home/hadoop/hadoop-1.0.4/logs/tpi/log-tpi-$date_log.log"
+path_log_NAS="/home/hadoop/hadoop-1.0.4/logs/tpi/NAS/log-nas-$date_log.log"
+path_log_box="/home/hadoop/hadoop-1.0.4/logs/tpi/Box/log-box-$date_log.log"
+path_log_Dbox="/home/hadoop/hadoop-1.0.4/logs/tpi/Dropbox/log-dropbox-$date_log.log"
+path_log_gdrive="/home/hadoop/hadoop-1.0.4/logs/tpi/GoogleDrive/log-gdrive-$date_log.log"
 path_blanktext="/home/hadoop/TESAPI/TESTSCRIPT/blank_text.txt"
 date2=$(date) 
 
 #variable Configuration
 nqs=0 #now queue size
-total=144120455168
+total=144118906880
 $onoff # on-off
 $maxper #max use space (%)
 $medper #medium use space (%)
@@ -218,19 +226,19 @@ done < $path_conf
    
   #read local space to nowspaceper
   caluseper 100
- 
+
   # tran mb to byte
   tobyte $mfs
   mfs=$outbyte  
-  qs=$(($maxper-medper))
+  qs=$(($nowspaceper-medper))
   qs=$(($qs*$total))
   qs=$(($qs/100))
+  qs=1000000
   echo "[OK]"    
-  #echo "$nowspaceper"
-  #createpathfile fromlsr
-  #START PROCCESS
-  nowspaceper=77
-  qs=800000  
+  echo "now spaceper is: $nowspaceper"
+  echo "que size is : $qs"    
+  #nowspaceper=77
+    
   #echo "Max file size : $mfs"
   if [ "$onoff" -eq "0" ]
   then
@@ -241,9 +249,8 @@ done < $path_conf
       echo "less then 'space use' configure"      
     else      
       echo "START PROCESS"
-      cmd=""
-      Path_java=""
-      #createpathfile fromlsr
+      cmd=""      
+      createpathfile fromlsr
 
       #choose NAS
       nonas=1
@@ -253,8 +260,11 @@ done < $path_conf
       for word in $line 
       do 
         if [ "$word" -ne 0 ]; then      
-          #chper=$(sh $path_Nas spaceper $count1)
-          if [ "$chper" -le 80 ];then
+          #chper=$(sh $path_Nas space $count1 | grep -i "free" | awk -F ' ' '{print $6}')
+          #tobyte $chper
+          #chper=$outbyte
+          #if [ "$chper" -gt "$qs" ];then
+          if [ "$chper" -lt 80 ];then
               nonas=0
               break
           fi
@@ -268,6 +278,7 @@ done < $path_conf
         if [ "$active" -ne 0 ]  #Choose Priority
         then
           #choose 2nd Storage with priority
+          echo "choose 2nd Storage with priority "
           path=($path_conf_a1 $path_conf_a2 $path_conf_a3)
           tLen=${#path[@]} 
           count2=0
@@ -303,8 +314,10 @@ done < $path_conf
                     if [ "$word" = "${prisort[$p]}" ] && [ "$word" -ne 0  ];then
                       if [ "$i" -eq 0 ];then #Choose Box                   
                         #check usespaceper
-                        chper=$(java -jar $path_Box spaceper $count2)                                          
-                        if [ "$chper" -le 80 ];then
+                        chper=$(java -jar $path_Box space $count2 | grep -i "free" | awk -F ' ' '{print $6}')
+                        tobyte $chper
+                        chper=$outbyte                                          
+                        if [ "$chper" -gt "$qs" ];then
                           Path_java=$path_Box
                           flag=1                  
                           break
@@ -314,8 +327,10 @@ done < $path_conf
                         fi
                       elif [ "$i" -eq 1 ];then #Choose Dropbox                          
                         #check usespaceper          
-                        chper=$(java -jar $path_Dbox spaceper $tfile$count2)                                          
-                        if [ "$chper" -le 80 ];then
+                        chper=$(java -jar $path_Dbox space $tfile$count2 | grep -i "free" | awk -F ' ' '{print $6}')                                          
+                        tobyte $chper
+                        chper=$outbyte 
+                        if [ "$chper" -gt "$qs" ];then
                           Path_java=$path_Dbox
                           flag=1                  
                           break
@@ -324,9 +339,11 @@ done < $path_conf
                           break              
                         fi         
                       elif [ "$i" -eq 2 ];then #Choose GoogleDrive          
-                        #check usespaceper               
-                        chper=$(java -jar $path_Gdrive spaceper $count2)                                          
-                        if [ "$chper" -le 80 ];then
+                        #check usespaceper                                      
+                        chper=$(java -jar $path_Gdrive space $count2 | grep -i "free" | awk -F ' ' '{print $6}')                                          
+                        tobyte  $chper
+                        chper=$outbyte
+                        if [ "$chper" -gt "$qs" ];then
                           Path_java=$path_Gdrive
                           flag=1                  
                           break
@@ -349,6 +366,7 @@ done < $path_conf
             cmd="$javahome -jar $Path_java upload $count2"
           fi                
         else  #Choose base performace
+          echo "choose 2nd Storage with Base Performance "
           nocloud=0
           choose_base=0
           min_score=99999
@@ -394,7 +412,7 @@ done < $path_conf
           fi              
         fi
       else #Upload NAS          
-          #echo "NAS with Account $count1"
+          echo "choose 2nd Storage with NAS "
           cmd="sh $path_Nas upload $count1"
           
       fi
@@ -402,12 +420,12 @@ done < $path_conf
 
       if [ "$nonas" -eq 1 ] &&  [ "$nocloud" -eq 1 ]
       then
-        echo "All Secondary Storage is full.."
+        echo "ERROR -- No cloud available or not enough storage"        
       else
         ########################## CHOOSE FILE ##############################                
         while read line || [ -n "$line" ]
         do
-          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ] || [ `echo "$line" | grep -c "54211536" ` -gt 0 ]
+          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ] #|| [ `echo "$line" | grep -c "54211536" ` -gt 0 ]
           then          
             if [ `echo "$line" | grep -c "/user/hadoop/.Trash" ` -gt 0 ] || [ `echo "$line" | grep -c "/user/hadoop/.Revision" ` -gt 0 ]
             then
@@ -418,7 +436,7 @@ done < $path_conf
               valuetmp=$(<$path_temptxt)
               filedate=${valuetmp:0:10}
               caldate $filedate $nowdatesystem
-              echo "day :$day"
+              #echo "day :$day"
               if [ "$day" -lt "$ltu" ] #check Last Update
               then
                 free1 2 #don't get file less than ltu
@@ -427,7 +445,7 @@ done < $path_conf
                 # check max file size
                 size=$(hadoop dfs -dus $line)
                 size_of_file=$(awk -F' ' '{ print $2 }' <<< $size)                
-                echo "size = $size_of_file"                
+                #echo "size = $size_of_file"                
                 if [ "$nqs" -le "$qs" ]
                 then                  
                   if [ "$size_of_file" -ge "$mfs" ]
@@ -443,23 +461,81 @@ done < $path_conf
                     ret=$?
                     if [ "$ret" -eq 0 ]
                     then
-                      a2421=$(grep -i $cut_b2 $path_cloud_a)
+                      a2421=$(grep -i $cut_b2 $path_file_a)
                       ret=$?
                       if [ "$ret" -eq 0 ]
                       then
-                          echo "SKIP -- file already in cloud"
+                        echo "SKIP -- file already in cloud"                          
+                        if [ "$nonas" -eq 1 ]                                                  
+                        then
+                          if [ "$Path_java" =  "$path_Box" ]; then  
+                            echo "SKIP -- file already in cloud $line" >> $path_log_box
+                          elif [ "$Path_java" =  "$path_Dbox" ]; then
+                            echo "SKIP -- file already in cloud $line" >> $path_log_Dbox
+                          elif [ "$Path_java" =  "$path_Gdrive" ]; then
+                            echo "SKIP -- file already in cloud $line" >> $path_log_gdrive
+                          fi                          
+                        else
+                          echo "SKIP -- file already in cloud $line" >> $path_log_NAS
+                        fi
                       else                        
                         nqs=$(($nqs + $size_of_file))                                              
-                        # START TO MOVE                        
+                        # START TO MOVE
                         id=$(eval "$cmd $path_toupload $cut_b" | awk '{print $NF}')
+                        echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b"
+                        if [ "$nonas" -eq 1 ]                                                  
+                        then
+                          if [ "$active" -eq 1 ]
+                          then
+                            if [ "$Path_java" =  "$path_Box" ]; then  
+                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_box
+                              echo "$cut_b2 $path_file_box$count2.txt" >> $path_file_a
+                              echo "$cut_b2 $id" >> $path_file_box$count2.txt
+                            elif [ "$Path_java" =  "$path_Dbox" ]; then
+                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_Dbox
+                              echo "$cut_b2 $path_file_Dbox$count2.txt" >> $path_file_a
+                              echo "$cut_b2 $id" >> $path_file_Dbox$count2.txt                              
+                            elif [ "$Path_java" =  "$path_Gdrive" ]; then
+                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_gdrive
+                              echo "$cut_b2 $path_file_gdrive$count2.txt" >> $path_file_a
+                              echo "$cut_b2 $id" >> $path_file_gdrive$count2.txt                              
+                            fi                            
+                          else                            
+                            if [ "$Path_java" =  "$path_Box" ]; then
+                            echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_box  
+                              echo "$cut_b2 $path_file_box$count3.txt" >> $path_file_a
+                              echo "$cut_b2 $id" >> $path_file_box$count3.txt                              
+                            elif [ "$Path_java" =  "$path_Dbox" ]; then
+                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_Dbox
+                              echo "$cut_b2 $path_file_Dbox$count3.txt" >> $path_file_a
+                              echo "$cut_b2 $id" >> $path_file_Dbox$count3.txt                              
+                            elif [ "$Path_java" =  "$path_Gdrive" ]; then
+                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_gdrive
+                              echo "$cut_b2 $path_file_gdrive$count3.txt" >> $path_file_a
+                              echo "$cut_b2 $id" >> $path_file_gdrive$count3.txt                              
+                            fi
+                          fi                          
+                        else
+                          echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_NAS 
+                          echo "$cut_b2 $path_file_NAS$count1.txt" >> $path_file_a
+                          #echo "$cut_b2 $id" >> $path_file_NAS$count1.txt
+                        fi                      
                         #hadoop dfs -rm $cut_b2
                         #hadoop dfs -touchz $cut_b2 
-                        echo "$cut_b2 $Path_java" >> $path_cloud_a
-                        #echo "$cut_b2" >> $path_cloud_t
-                        echo "MOVE -- $size_of_file -- $path_torm -- $cut_b"
                       fi                      
                     else
-                      echo "ERROR -- fail to get file from local -- $line"
+                      if [ "$nonas" -eq 1 ]                                                  
+                      then
+                        if [ "$Path_java" =  "$path_Box" ]; then  
+                          echo "ERROR -- fail to get file from local -- $line" >> $path_log_box
+                        elif [ "$Path_java" =  "$path_Dbox" ]; then
+                          echo "ERROR -- fail to get file from local -- $line" >> $path_log_Dbox
+                        elif [ "$Path_java" =  "$path_Gdrive" ]; then
+                          echo "ERROR -- fail to get file from local -- $line" >> $path_log_gdrive
+                        fi                        
+                      else
+                        echo "ERROR -- fail to get file from local -- $line" >> $path_log_NAS
+                      fi
                     fi
                   fi
                 else
@@ -470,11 +546,30 @@ done < $path_conf
             fi
             echo " "
           fi
-        done < $path_full
-        
+        done < $path_full        
       fi
       # Keep Log
-
+      finishlogdate=$(date)
+      if [ "$nonas" -eq 1 ]                                                  
+      then
+        if [ "$Path_java" =  "$path_Box" ]; then  
+          echo "FINISH:$finishlogdate" >> $path_log_box
+          echo "" >> $path_log_box
+          echo "Save log: $path_log_box"
+        elif [ "$Path_java" =  "$path_Dbox" ]; then
+          echo "FINISH:$finishlogdate" >> $path_log_Dbox
+          echo "" >> $path_log_Dbox
+          echo "Save log: $path_log_Dbox"
+        elif [ "$Path_java" =  "$path_Gdrive" ]; then
+          echo "FINISH:$finishlogdate" >> $path_log_gdrive
+          echo "" >> $path_log_gdrive
+          echo "Save log: $path_log_gdrive"
+        fi        
+      else
+        echo "FINISH:$finishlogdate" >> $path_log_NAS
+        echo "" >> $path_log_NAS
+        echo "Save log: $path_log_NAS"
+      fi 
     fi    
   fi 
 clear_end 1
