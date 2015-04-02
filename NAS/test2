@@ -1,0 +1,4 @@
+!/bin/bash
+line=$(sed -n 3p /home/hadoop/TESAPI/TESTSCRIPT/NAS/test1)
+echo $line
+exit

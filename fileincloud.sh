@@ -18,15 +18,15 @@ echo "$(java -jar $pathdb listing /home/hadoop/TESAPI/TESTSCRIPT/token.pcs3 /)" 
 echo "<h2 style="clear:both">Google Drive</h2>" >> $pathtxt
 echo "<p style="clear:both">" >> $pathtxt
 echo "____________________________ Cloud1 ___________________________" >> $pathtxt
-echo "$(java -jar $pathgdrive 1 listingAll)" >> $pathtxt
+echo "$(java -jar $pathgdrive listingAll 1)" >> $pathtxt
 
 
 echo "<h2 style="clear:both">Box</h2>" >> $pathtxt
 echo "<p style="clear:both">" >> $pathtxt
 echo "____________________________ Cloud1 ___________________________" >> $pathtxt
-echo "$(java -jar $pathbox 1 listingAll )" >> $pathtxt
+echo "$(java -jar $pathbox listingAll 1)" >> $pathtxt
 echo "____________________________ Cloud2 ___________________________" >> $pathtxt
-echo "$(java -jar $pathbox 2 listingAll )" >> $pathtxt
+echo "$(java -jar $pathbox listingAll 2)" >> $pathtxt
 
 
 exit 1

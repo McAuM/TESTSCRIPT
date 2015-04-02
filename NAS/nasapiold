@@ -1,5 +1,5 @@
 #!/bin/bash
-ip="CpeCloud2013"
+ip="10.35.27.179"
 port="5000"
 usr="admin"
 pwd="admin"
@@ -20,9 +20,9 @@ case $command in
 		echo "-showlist			<folderpath>"
 	;;
 	-a | account )
-		curl -X GET "http://${ip}:${port}/webapi/FileStation/info.cgi?api=SYNO.FileStation.Info&version=1&method=getinfo&_sid=${sid}" -s | jq '.data.hostname' | cut -d '"' -f2
+		curl -X GET "http://${ip}:${port}/webapi/FileStation/info.cgi?api=SYNO.FileStation.Info&version=1&method=getinfo&_sid=${sid}" -s | jq '.data'
 		curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=1&method=logout&_sid=${sid}&session=FileStation" -s
-		#echo "Get Information of Account Complete"
+		echo "Get Information of Account Complete"
 	;;
 	-s | space )
 		freespace=$(curl -X GET "http://${ip}:${port}/webapi/FileStation/file_share.cgi?api=SYNO.FileStation.List&version=1&method=list_share&_sid=${sid}&additional=volume_status" -s | jq '.data.shares[0].additional.volume_status.freespace')
@@ -32,7 +32,7 @@ case $command in
 		echo "Free Space: ${freespaceGB} GB or $((freespace/(1024*1024))) MB"
 		echo "Total Space: ${totalspaceGB} GB or $((totalspace/(1024*1024))) MB"
 		curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=1&method=logout&_sid=${sid}&session=FileStation" -s
-		#echo "Get Information Free Space and Total Space Complete"
+		echo "Get Information Free Space and Total Space Complete"
 	;;
 	-us | usespace )
 		taskid=$(curl -X GET "http://${ip}:${port}/webapi/FileStation/file_dirSize.cgi?api=SYNO.FileStation.DirSize&version=1&method=start&_sid=${sid}&path=${2}" -s | jq '.data.taskid' | cut -d '"' -f2)
@@ -42,26 +42,24 @@ case $command in
 		#spaceMB=$((space/(1024*1024)))
 		echo "Use Space: ${spaceGB} GB or $((space/(1024*1024))) MB"
 		curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=1&method=logout&_sid=${sid}&session=FileStation" -s
-		#echo "Get Use Space Information of path ${2} Complete"
+		echo "Get Use Space Information of path ${2} Complete"
 	;;
 	-u | upload )
 		curl -X POST "http://${ip}:${port}/webapi/FileStation/api_upload.cgi?" -F _sid="${sid}" -F api="SYNO.FileStation.Upload" -F version="1" -F method="upload" -F dest_folder_path="${3}" -F create_parents="true" -F overwrite="true" -F file=@"${2}"
 		curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=1&method=logout&_sid=${sid}&session=FileStation" -s
-		#echo "Upload Complete"
+		echo "Upload Complete"
 	;;
 	-del | delete)
 		curl -X GET "http://${ip}:${port}/webapi/FileStation/file_delete.cgi?api=SYNO.FileStation.Delete&version=1&method=delete&_sid=${sid}&path=${2}" -s
 		curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=1&method=logout&_sid=${sid}&session=FileStation" -s
-		#echo "Delete Complete"		
+		echo "Delete Complete"		
 	;;
 	-d | download ) 
 		curl -X GET "http://${ip}:${port}/webapi/FileStation/file_download.cgi?api=SYNO.FileStation.Download&version=1&method=download&_sid=${sid}&mode=download&path=${2}" -s > ${3}
-		curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=1&method=logout&_sid=${sid}&session=FileStation" -s
-		#echo "Download Complete"
+		echo "Download Complete"
 	;;
 	-ls | showlist )
 		curl -X GET "http://${ip}:${port}/webapi/FileStation/file_share.cgi?api=SYNO.FileStation.List&version=1&method=list&_sid=${sid}&additional=real_path%2Csize%2Cowner%2Ctime%2Cperm%2Ctype&folder_path=${2}" -s | jq '.data.files[] | {name, path}' | jq '.name' | cut -d '"' -f2
-		curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=1&method=logout&_sid=${sid}&session=FileStation" -s
 	;;
 	* ) echo "ERROR";;
 esac

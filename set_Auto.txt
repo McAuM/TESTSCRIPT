@@ -1,2 +1,2 @@
-on-off max-sp mid-sp min-sp gth-rate prob-chk ltu-day mfs-mb
-2 75 70 65 30 7 2 6
+on-off act-pri max-sp mid-sp min-sp gth-rate prob-chk ltu-day mfs-mb
+1 0 13 12 11 30 7 0 10

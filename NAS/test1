@@ -1,0 +1,4 @@
+#!/bin/bash
+a="Max Cpe Kmutt"
+return $a
+exit

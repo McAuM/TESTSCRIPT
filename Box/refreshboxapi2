@@ -1,21 +1,19 @@
 #!/bin/bash
 command="$1";
-client_id="awpbu85jgxxhfeybsqygf6qqxtn5dbs1"
-client_secret="VhTpmy4VMhCgyuhm302xYuIwxb6xMZML"
+client_id=$(awk "NR==2{print;exit}" /home/hadoop/TESAPI/TESTSCRIPT/Box/cliID.box)
+client_secret=$(awk "NR==2{print;exit}" /home/hadoop/TESAPI/TESTSCRIPT/Box/cliSECRET.box)
+#client_id="awpbu85jgxxhfeybsqygf6qqxtn5dbs1"
+#client_secret="VhTpmy4VMhCgyuhm302xYuIwxb6xMZML"
 
 while read line
 do
 	refresh_token="$line"
-done < Box/refreshtoken.box2
+done < /home/hadoop/TESAPI/TESTSCRIPT/Box/refreshtoken.box2
 #echo "refresh token = ${refresh_token}"
 
-curl "https://app.box.com/api/oauth2/token"  -d "grant_type=refresh_token&refresh_token=${refresh_token}&client_id=${client_id}&client_secret=${client_secret}"  -X "POST" -s | jq '.access_token' | cut -d'"' -f2 > Box/token.box2
-curl "https://app.box.com/api/oauth2/token"  -d "grant_type=refresh_token&refresh_token=${refresh_token}&client_id=${client_id}&client_secret=${client_secret}"  -X "POST" -s | jq '.refresh_token' | cut -d'"' -f2 > Box/refreshtoken.box2
-while read line2
-do
-	token_access="$line2"
-done < Box/token.box2
-#echo "access_token = $token_access"
+curl "https://app.box.com/api/oauth2/token"  -d "grant_type=refresh_token&refresh_token=${refresh_token}&client_id=${client_id}&client_secret=${client_secret}"  -X "POST" -s | jq '.access_token' | cut -d'"' -f2 > /home/hadoop/TESAPI/TESTSCRIPT/Box/token.box2
+curl "https://app.box.com/api/oauth2/token"  -d "grant_type=refresh_token&refresh_token=${refresh_token}&client_id=${client_id}&client_secret=${client_secret}"  -X "POST" -s | jq '.refresh_token' | cut -d'"' -f2 > /home/hadoop/TESAPI/TESTSCRIPT/Box/refreshtoken.box2
+
 
 
 

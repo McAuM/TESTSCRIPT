@@ -80,17 +80,17 @@ echo "<h2 style="clear:both">Google Drive</h2>" >> $pathtxt
 echo "<p style="clear:both">" >> $pathtxt
 echo "____________________________ Cloud1 ___________________________" >> $pathtxt
 echo "Status: $gd1" >> $pathtxt
-echo "$(java -jar $pathgdrive 1 account)" >> $pathtxt
+echo "$(java -jar $pathgdrive account 1)" >> $pathtxt
 
 
 echo "<h2 style="clear:both">Box</h2>" >> $pathtxt
 echo "<p style="clear:both">" >> $pathtxt
 echo "____________________________ Cloud1 ___________________________" >> $pathtxt
 echo "Status: $box1" >> $pathtxt
-echo "$(java -jar $pathbox 1 account)" >> $pathtxt
+echo "$(java -jar $pathbox account 1)" >> $pathtxt
 echo "____________________________ Cloud2 ___________________________" >> $pathtxt
 echo "Status: $box2" >> $pathtxt
-echo "$(java -jar $pathbox 2 account)" >> $pathtxt
+echo "$(java -jar $pathbox account 2)" >> $pathtxt
 
 
 exit 1

@@ -1,0 +1,6 @@
+#!/bin/bash
+ip="CpeCloud2013"
+port="5000"
+usr="admin"
+pwd="admin"
+sid=$(curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=3&method=login&account=${usr}&passwd=${pwd}&session=FileStation&format=cookie" -s | jq '.data.sid' | cut -d'"' -f2 )

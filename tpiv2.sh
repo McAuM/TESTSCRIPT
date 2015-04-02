@@ -430,7 +430,7 @@ done < $path_conf
       echo "path full $path_full"
       while read line
         do
-          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ] # testin 54211534
+          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ]
           then             
             echo "CHECKING... -- $line"
             # Get Date and File Size                          
@@ -535,7 +535,7 @@ done < $path_conf
               fi
             fi
             echo " "                        
-          fi # test in 54211534
+          fi
         done < $path_full
       fi
       # Keep Log

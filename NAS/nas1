@@ -1,0 +1,7 @@
+#!/bin/bash
+ip="10.35.27.179"
+port="5000"
+usr="admin"
+pwd="admin"
+command="${1}"
+echo curl -X GET "http://${ip}:${port}/webapi/auth.cgi?api=SYNO.API.Auth&version=3&method=login&account=${usr}&passwd=${pwd}&session=FileStation&format=cookie" -s | jq '.data.sid' | cut -d'"' -f2 > token.nas1

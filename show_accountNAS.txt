@@ -1,0 +1,11 @@
+<h2 style=clear:both>NAS</h2>
+<p style=clear:both>
+____________________________ NAS1 ___________________________
+Status: Active
+User account info:
+display name = CpeCloud2013
+
+User space:
+total = 1829 GB or 1873254 MB
+used = 4 GB or 4739 MB
+free = 1824 GB or 1868514 MB

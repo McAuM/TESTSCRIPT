@@ -1,10 +1,11 @@
 #!/bin/bash
-
-client_id="239045167544-7cdofigo9aroldln3340n1bfqjbv0ksi.apps.googleusercontent.com"
-client_secret="3nj6cTgKqVYovs9cIijfGFhV"
+client_id=$(awk "NR==1{print;exit}" /home/hadoop/TESAPI/TESTSCRIPT/GoogleDrive/cliID.gdrive)
+client_secret=$(awk "NR==1{print;exit}" /home/hadoop/TESAPI/TESTSCRIPT/GoogleDrive/cliSECRET.gdrive)
+#client_id="239045167544-7cdofigo9aroldln3340n1bfqjbv0ksi.apps.googleusercontent.com"
+#client_secret="3nj6cTgKqVYovs9cIijfGFhV"
 refresh_token="1/skB6ZW8ppotsHGbOz_kcXVWqZ1MGL2Jxwbv11x5D1jo"
 
-curl -X "POST"  "https://accounts.google.com/o/oauth2/token"  -d "client_id=${client_id}&client_secret=${client_secret}&refresh_token=${refresh_token}&grant_type=refresh_token" -s  | jq '.access_token' | cut -d'"' -f2 > GoogleDrive/token.gdrive1
+curl -X "POST"  "https://accounts.google.com/o/oauth2/token"  -d "client_id=${client_id}&client_secret=${client_secret}&refresh_token=${refresh_token}&grant_type=refresh_token" -s  | jq '.access_token' | cut -d'"' -f2 >  /home/hadoop/TESAPI/TESTSCRIPT/GoogleDrive/token.gdrive1
 
 
 
