@@ -168,10 +168,10 @@ path_tempfile="/home/hadoop/TESAPI/TESTSCRIPT/tempfile"
 
 date_log=$(date +"%Y-%m-%d")
 #path_log="/home/hadoop/test/log-tpi-$date_log.txt" # keep log by date
-path_log_NAS="/home/hadoop/hadoop-1.0.4/logs/tpi/NAS/log-nas-$date_log.log"
-path_log_box="/home/hadoop/hadoop-1.0.4/logs/tpi/Box/log-box-$date_log.log"
-path_log_Dbox="/home/hadoop/hadoop-1.0.4/logs/tpi/Dropbox/log-dropbox-$date_log.log"
-path_log_gdrive="/home/hadoop/hadoop-1.0.4/logs/tpi/GoogleDrive/log-gdrive-$date_log.log"
+path_log_NAS="/home/hadoop/hadoop-1.0.4/logs/tpi/NAS/log-nas-$date_log-upload.log"
+path_log_box="/home/hadoop/hadoop-1.0.4/logs/tpi/Box/log-box-$date_log-upload.log"
+path_log_Dbox="/home/hadoop/hadoop-1.0.4/logs/tpi/Dropbox/log-dropbox-$date_log-upload.log"
+path_log_gdrive="/home/hadoop/hadoop-1.0.4/logs/tpi/GoogleDrive/log-gdrive-$date_log-upload.log"
 path_blanktext="/home/hadoop/TESAPI/TESTSCRIPT/blank_text.txt"
 date2=$(date) 
 
@@ -360,10 +360,13 @@ done < $path_conf
           #echo "Priority java $Path_java with account $count2"
           if [ "$Path_java" =  "$path_Box" ]; then  
             cmd="$javahome -jar $Path_java upload $count2"
+            path_log="$path_log_box"
           elif [ "$Path_java" =  "$path_Dbox" ]; then
             cmd="$javahome -jar $Path_java upload $tfile$count2"
+            path_log="$path_log_Dbox"
           elif [ "$Path_java" =  "$path_Gdrive" ]; then
             cmd="$javahome -jar $Path_java upload $count2"
+            path_log="$path_log_gdrive"
           fi                
         else  #Choose base performace
           echo "choose 2nd Storage with Base Performance "
@@ -404,23 +407,27 @@ done < $path_conf
             #echo "Base Performance java $Path_java with account $count3"          
             if [ "$Path_java" =  "$path_Box" ]; then  
               cmd="$javahome -jar $Path_java upload $count3"
+              path_log="$path_log_box"
             elif [ "$Path_java" =  "$path_Dbox" ]; then
               cmd="$javahome -jar $Path_java upload /home/hadoop/TESAPI/TESTSCRIPT/token.pcs$count3"
+              path_log="$path_log_Dbox"
             elif [ "$Path_java" =  "$path_Gdrive" ]; then
               cmd="$javahome -jar $Path_java upload $count3"
+              path_log="$path_log_gdrive"
             fi  
           fi              
         fi
       else #Upload NAS          
           echo "choose 2nd Storage with NAS "
           cmd="sh $path_Nas upload $count1"
+          path_log="$path_log_NAS"
           
       fi
       ####################  END Choose Secondary Stroage ######################
 
       if [ "$nonas" -eq 1 ] &&  [ "$nocloud" -eq 1 ]
       then
-        echo "ERROR -- No cloud available or not enough storage"        
+        echo "ERROR -- No cloud available or not enough storage" >> $path_log
       else
         ########################## CHOOSE FILE ##############################                
         while read line || [ -n "$line" ]
@@ -465,77 +472,50 @@ done < $path_conf
                       ret=$?
                       if [ "$ret" -eq 0 ]
                       then
-                        echo "SKIP -- file already in cloud"                          
-                        if [ "$nonas" -eq 1 ]                                                  
-                        then
-                          if [ "$Path_java" =  "$path_Box" ]; then  
-                            echo "SKIP -- file already in cloud $line" >> $path_log_box
-                          elif [ "$Path_java" =  "$path_Dbox" ]; then
-                            echo "SKIP -- file already in cloud $line" >> $path_log_Dbox
-                          elif [ "$Path_java" =  "$path_Gdrive" ]; then
-                            echo "SKIP -- file already in cloud $line" >> $path_log_gdrive
-                          fi                          
-                        else
-                          echo "SKIP -- file already in cloud $line" >> $path_log_NAS
-                        fi
+                        echo "SKIP -- file already in cloud in $line"                          
+                        echo "SKIP -- file already in cloud in $line" >> $path_log
                       else                        
                         nqs=$(($nqs + $size_of_file))                                              
                         # START TO MOVE
                         id=$(eval "$cmd $path_toupload $cut_b" | awk '{print $NF}')
                         echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b"
+                        echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log
                         if [ "$nonas" -eq 1 ]                                                  
                         then
                           if [ "$active" -eq 1 ]
                           then
-                            if [ "$Path_java" =  "$path_Box" ]; then  
-                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_box
+                            if [ "$Path_java" =  "$path_Box" ]; then                                
                               echo "$cut_b2 $path_file_box$count2.txt" >> $path_file_a
                               echo "$cut_b2 $id" >> $path_file_box$count2.txt
-                            elif [ "$Path_java" =  "$path_Dbox" ]; then
-                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_Dbox
+                            elif [ "$Path_java" =  "$path_Dbox" ]; then                              
                               echo "$cut_b2 $path_file_Dbox$count2.txt" >> $path_file_a
                               echo "$cut_b2 $id" >> $path_file_Dbox$count2.txt                              
-                            elif [ "$Path_java" =  "$path_Gdrive" ]; then
-                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_gdrive
+                            elif [ "$Path_java" =  "$path_Gdrive" ]; then                              
                               echo "$cut_b2 $path_file_gdrive$count2.txt" >> $path_file_a
                               echo "$cut_b2 $id" >> $path_file_gdrive$count2.txt                              
                             fi                            
                           else                            
-                            if [ "$Path_java" =  "$path_Box" ]; then
-                            echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_box  
+                            if [ "$Path_java" =  "$path_Box" ]; then                            
                               echo "$cut_b2 $path_file_box$count3.txt" >> $path_file_a
                               echo "$cut_b2 $id" >> $path_file_box$count3.txt                              
-                            elif [ "$Path_java" =  "$path_Dbox" ]; then
-                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_Dbox
+                            elif [ "$Path_java" =  "$path_Dbox" ]; then                              
                               echo "$cut_b2 $path_file_Dbox$count3.txt" >> $path_file_a
                               echo "$cut_b2 $id" >> $path_file_Dbox$count3.txt                              
-                            elif [ "$Path_java" =  "$path_Gdrive" ]; then
-                              echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_gdrive
+                            elif [ "$Path_java" =  "$path_Gdrive" ]; then                              
                               echo "$cut_b2 $path_file_gdrive$count3.txt" >> $path_file_a
                               echo "$cut_b2 $id" >> $path_file_gdrive$count3.txt                              
                             fi
                           fi                          
-                        else
-                          echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log_NAS 
+                        else                          
                           echo "$cut_b2 $path_file_NAS$count1.txt" >> $path_file_a
                           #echo "$cut_b2 $id" >> $path_file_NAS$count1.txt
                         fi                      
-                        #hadoop dfs -rm $cut_b2
-                        #hadoop dfs -touchz $cut_b2 
+                        hadoop dfs -rm $cut_b2
+                        hadoop dfs -touchz $cut_b2 
                       fi                      
-                    else
-                      if [ "$nonas" -eq 1 ]                                                  
-                      then
-                        if [ "$Path_java" =  "$path_Box" ]; then  
-                          echo "ERROR -- fail to get file from local -- $line" >> $path_log_box
-                        elif [ "$Path_java" =  "$path_Dbox" ]; then
-                          echo "ERROR -- fail to get file from local -- $line" >> $path_log_Dbox
-                        elif [ "$Path_java" =  "$path_Gdrive" ]; then
-                          echo "ERROR -- fail to get file from local -- $line" >> $path_log_gdrive
-                        fi                        
-                      else
-                        echo "ERROR -- fail to get file from local -- $line" >> $path_log_NAS
-                      fi
+                    else                      
+                      echo "ERROR -- fail to get file from local -- $line"                      
+                      echo "ERROR -- fail to get file from local -- $line" >> $path_log
                     fi
                   fi
                 else
@@ -545,31 +525,14 @@ done < $path_conf
               fi
             fi
             echo " "
-          fi
+          fi # remove 54211534
         done < $path_full        
       fi
       # Keep Log
       finishlogdate=$(date)
-      if [ "$nonas" -eq 1 ]                                                  
-      then
-        if [ "$Path_java" =  "$path_Box" ]; then  
-          echo "FINISH:$finishlogdate" >> $path_log_box
-          echo "" >> $path_log_box
-          echo "Save log: $path_log_box"
-        elif [ "$Path_java" =  "$path_Dbox" ]; then
-          echo "FINISH:$finishlogdate" >> $path_log_Dbox
-          echo "" >> $path_log_Dbox
-          echo "Save log: $path_log_Dbox"
-        elif [ "$Path_java" =  "$path_Gdrive" ]; then
-          echo "FINISH:$finishlogdate" >> $path_log_gdrive
-          echo "" >> $path_log_gdrive
-          echo "Save log: $path_log_gdrive"
-        fi        
-      else
-        echo "FINISH:$finishlogdate" >> $path_log_NAS
-        echo "" >> $path_log_NAS
-        echo "Save log: $path_log_NAS"
-      fi 
+      echo "FINISH:$finishlogdate" >> $path_log
+      echo "" >> $path_log
+      echo "Save log: $path_log"
     fi    
   fi 
 clear_end 1

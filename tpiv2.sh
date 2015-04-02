@@ -25,9 +25,9 @@ clear_start(){
 
 clear_end(){
  fmdd=$1
- #rm -rf $path_tempfile
- #mkdir $path_tempfile
- #rm -rf $path_temptxt
+ rm -rf $path_tempfile
+ mkdir $path_tempfile
+ rm -rf $path_temptxt
  hadoop dfs -rmr .Trash/*
  return 1
 }
@@ -140,11 +140,10 @@ path_temptxt="/home/hadoop/TESAPI/TESTSCRIPT/temp.txt"
 path_tempfile="/home/hadoop/TESAPI/TESTSCRIPT/tempfile/"
 
 date_log=$(date +"%Y-%m-%d")
-#path_log="/home/hadoop/test/log-tpi-$date_log.txt" # keep log by date
-path_log_NAS="/home/hadoop/hadoop-1.0.4/logs/tpi/NAS/log-nas-$date_log.log"
-path_log_box="/home/hadoop/hadoop-1.0.4/logs/tpi/Box/log-box-$date_log.log"
-path_log_Dbox="/home/hadoop/hadoop-1.0.4/logs/tpi/Dropbox/log-dropbox-$date_log.log"
-path_log_gdrive="/home/hadoop/hadoop-1.0.4/logs/tpi/GoogleDrive/log-gdrive-$date_log.log"
+path_log_NAS="/home/hadoop/hadoop-1.0.4/logs/tpi/NAS/log-nas-$date_log-download.log"
+path_log_box="/home/hadoop/hadoop-1.0.4/logs/tpi/Box/log-box-$date_log-download.log"
+path_log_Dbox="/home/hadoop/hadoop-1.0.4/logs/tpi/Dropbox/log-dropbox-$date_log-download.log"
+path_log_gdrive="/home/hadoop/hadoop-1.0.4/logs/tpi/GoogleDrive/log-gdrive-$date_log-download.log"
 path_blanktext="/home/hadoop/TESAPI/TESTSCRIPT/blank_text.txt"
 date2=$(date) 
 
@@ -211,7 +210,7 @@ done < $path_conf
   #echo "$nowspaceper"  
   #START PROCCESS
   nowspaceper=9
-  qs=800000  
+  qs=1000000  
   #echo "Max file size : $mfs"      
   if [ "$onoff" -eq "0" ]
   then
@@ -338,14 +337,20 @@ done < $path_conf
           if [ "$Path_java" =  "$path_Box" ]; then  
             cmd="$javahome -jar $Path_java download2 $count2"
             cmd2="$javahome -jar $Path_java metadata $count2"
+            cmd3="$javahome -jar $Path_java delete $count2"
+            path_log="$path_log_box"
             path_full="$path_file_box$count2.txt"            
           elif [ "$Path_java" =  "$path_Dbox" ]; then
             cmd="$javahome -jar $Path_java download $tfile$count2"
             cmd2="$javahome -jar $Path_java metadata $tfile$count2"
+            cmd3="$javahome -jar $Path_java delete $tfile$count2"
+            path_log="$path_log_Dbox"
             path_full="$path_file_Dbox$count2.txt"
           elif [ "$Path_java" =  "$path_Gdrive" ]; then
             cmd="$javahome -jar $Path_java download2 $count2"
             cmd2="$javahome -jar $Path_java metadata $count2"
+            cmd3="$javahome -jar $Path_java delete $count2"
+            path_log="$path_log_gdrive"
             path_full="$path_file_gdrive$count2.txt"            
           fi                        
         else  #Choose base performace
@@ -387,28 +392,37 @@ done < $path_conf
             if [ "$Path_java" =  "$path_Box" ]; then  
               cmd="$javahome -jar $Path_java download2 $count3"
               cmd2="$javahome -jar $Path_java metadata $count3"
+              cmd3="$javahome -jar $Path_java delete $count3"
+              path_log="$path_log_box"
               path_full="$path_file_box$count3.txt"              
             elif [ "$Path_java" =  "$path_Dbox" ]; then
               cmd="$javahome -jar $Path_java download /home/hadoop/TESAPI/TESTSCRIPT/token.pcs$count3"
               cmd2="$javahome -jar $Path_java metadata /home/hadoop/TESAPI/TESTSCRIPT/token.pcs$count3"
+              cmd3="$javahome -jar $Path_java delete /home/hadoop/TESAPI/TESTSCRIPT/token.pcs$count3"
+              path_log="$path_log_Dbox"
               path_full="$path_file_Dbox$count3.txt"
             elif [ "$Path_java" =  "$path_Gdrive" ]; then
               cmd="$javahome -jar $Path_java download2 $count3"
               cmd2="$javahome -jar $Path_java metadata $count3"
+              cmd3="$javahome -jar $Path_java delete $count3"
               path_full="$path_file_gdrive$count3.txt"              
+              path_log="$path_log_gdrive"
             fi  
           fi              
         fi
       else #Upload NAS          
           echo "choose 2nd Storage with NAS "          
           cmd="sh $path_Nas download $count1"          
-          cmd2="sh $path_Nas metadata $count1"
+          cmd2="sh $path_Nas metadata $count1"          
+          cmd3="sh $path_Nas delete $count1"
+          path_log="$path_log_NAS"
           path_full="$path_file_NAS$count1.txt"
       fi      
       ####################  END Choose Secondary Stroage ######################
       if [ "$nonas" -eq 1 ] &&  [ "$nocloud" -eq 1 ]
       then
-        echo "ERROR -- No cloud available or empty all storage"        
+        echo "ERROR -- No cloud available or empty all storage"
+        echo "ERROR -- No cloud available or empty all storage" >> $path_log   
       else
         ########################## CHOOSE FILE ##############################        
       echo "choosefile"
@@ -416,7 +430,7 @@ done < $path_conf
       echo "path full $path_full"
       while read line
         do
-          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ]
+          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ] # testin 54211534
           then             
             echo "CHECKING... -- $line"
             # Get Date and File Size                          
@@ -441,14 +455,14 @@ done < $path_conf
             else
               echo "NAS DATE SIZE"
             fi            
-            echo "Size: $size"
-            echo "Date: $date"
+            #echo "Size: $size"
+            #echo "Date: $date"
             
             #check Last Update
             caldate $date $nowdatesystem
             if [ "$day" -lt "$ltu" ] 
             then
-              free1 2 #don't get file less than ltu
+              free1 2 #don't get file more than ltu
               echo "SKIP -- lastupdate -- $line"
             else
               #check Max File Size
@@ -461,34 +475,74 @@ done < $path_conf
                 else
                   #START MOVE
                   echo "START MOVE"
+                  cutfile $line # cut file 
+                  nqs=$(($nqs + $size))
+                  #Load File To Local
                   if [ "$nonas" -eq 1 ]                                                  
-                  then
+                  then                        
                     if [ "$Path_java" =  "$path_Box" ]; then  
                       eval "$cmd $id $path_tempfile  "
-                    elif [ "$Path_java" =  "$path_Dbox" ]; then
-                      cutfile $line                      
+                    elif [ "$Path_java" =  "$path_Dbox" ]; then                                          
                       eval "$cmd $path_tempfile$cut_a $id "
                     elif [ "$Path_java" =  "$path_Gdrive" ]; then
-                      eval "$cmd $id $path_tempfile  "
+                      eval "$cmd $id $path_tempfile "
                     fi                          
-                  else
-                    cutfile $line                      
+                  else                                        
                     eval "$cmd $id $path_tempfile$cut_a"
                     echo "NAS Move"
-                  fi                              
-                fi
+                  fi
+                  #Upload File To Hadoop 
+                  path_toupload=$(echo "$line" | awk -F ' ' '{print $1}')                
+                  hadoop dfs -moveFromLocal $path_tempfile$cut_a $path_toupload
+                  ret=$?
+                  if [ "$ret" -eq 0 ]
+                  then                  
+                    echo "MOVE -- $size -- $path_tempfile$cut_a -- $path_toupload"
+                    echo "MOVE -- $size -- $path_tempfile$cut_a -- $path_toupload" >> $path_log
+                    #Remove line To Upload , File in cloud All 
+                    tmp=$(grep -v "$path_toupload" $path_full)                  
+                    tmp2=$(grep -v "$path_toupload" $path_file_a)
+                    if [ "$tmp" = "" ] && [ "$tmp2" = "" ]                 
+                    then
+                      echo "" > $path_full && sed '/^\s*$/d' $path_full > $path_temptxt && mv $path_temptxt $path_full
+                      echo "" > $path_file_a && sed '/^\s*$/d' $path_file_a > $path_temptxt && mv $path_temptxt $path_file_a
+                    else
+                      grep -v "$path_toupload" $path_full > $path_temptxt && mv $path_temptxt $path_full
+                      grep -v "$path_toupload" $path_file_a > $path_temptxt && mv $path_temptxt $path_file_a
+                    fi
+                     #Remove file in cloud,NAS
+                    if [ "$nonas" -eq 1 ]
+                    then                        
+                      if [ "$Path_java" =  "$path_Box" ]; then  
+                        eval "$cmd3 $id  "
+                      elif [ "$Path_java" =  "$path_Dbox" ]; then                                          
+                        eval "$cmd3 $id "
+                      elif [ "$Path_java" =  "$path_Gdrive" ]; then
+                        eval "$cmd3 $id "
+                      fi                          
+                    else                                        
+                      eval "$cmd3 $id "
+                      echo "NAS"
+                    fi
+                  else
+                    echo "Error to move file to Hadoop --- $line"
+                    echo "Error to move file to Hadoop --- $line" >> $path_log
+                  fi
+                fi                                                             
               else
                 echo "Full Queue Size"
                 break
               fi
             fi
             echo " "                        
-          fi
+          fi # test in 54211534
         done < $path_full
       fi
       # Keep Log
-
-
+      finishlogdate=$(date)
+      echo "FINISH:$finishlogdate" >> $path_log
+      echo "" >> $path_log
+      echo "Save log: $path_log"
     fi
   fi  
       

@@ -57,7 +57,7 @@ do
    fi    
 done
 
-#echo "account ${account[@]}"
+echo "account ${account[@]}"
 
 	count=0
 	# Upload 
@@ -132,14 +132,14 @@ done
  	rm -rf /home/hadoop/TESAPI/TESTSCRIPT/upload_test
  	if [ "${account[0]}" -ne 0 ]; then 	
 	 	id=$(java -jar $path_Box listingAll ${account[0]} | grep upload_test | awk '{print $NF}')
-		java -jar $path_Box deletefile ${account[0]} $id
+		java -jar $path_Box delete ${account[0]} $id
 	fi
 	if [ "${account[1]}" -ne 0 ]; then 	
 		java -jar $path_Dbox delete /home/hadoop/TESAPI/TESTSCRIPT/token.pcs${account[1]} /53211503/home/upload_test
 	fi
 	if [ "${account[2]}" -ne 0 ]; then 	
 		id=$(java -jar $path_Gdrive listingAll ${account[2]} | grep upload_test | awk '{print $NF}')
-		java -jar $path_Gdrive deletefile ${account[2]}  $id 
+		java -jar $path_Gdrive delete ${account[2]}  $id 
 	fi
 
 	score_box=$(echo "((${time[0]}*30)+(${time2[0]}*70))/100" | bc)
