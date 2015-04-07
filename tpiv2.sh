@@ -118,7 +118,7 @@ nowdatesystem=$(date +"%Y-%m-%d")
 path_Dbox="/home/hadoop/TESAPI/TESTSCRIPT/Dropbox.jar"
 path_Box="/home/hadoop/TESAPI/TESTSCRIPT/box.jar"
 path_Gdrive="/home/hadoop/TESAPI/TESTSCRIPT/gdrive.jar"
-path_Nas="/home/hadoop/TESAPI/TESTSCRIPT/nasapi"
+path_Nas="/home/hadoop/TESAPI/TESTSCRIPT/nasapi.sh"
 
 tfile="/home/hadoop/TESAPI/TESTSCRIPT/token.pcs" 
 
@@ -228,16 +228,16 @@ done < $path_conf
       #choose NAS
       nonas=1
       count1=1
-      chper=81
+      #chper=0
       line=$(awk 'END{print}' $path_conf_a4)
       for word in $line 
       do 
         if [ "$word" -ne 0 ]; then      
-          #chper=$(sh $path_Nas space $count1 | grep -i "free" | awk -F ' ' '{print $6}')
-          #tobyte $chper
-          #chper=$outbyte
-          #if [ "$chper" -gt "$qs" ];then
-          if [ "$chper" -lt 80 ];then
+          chper=$(sh $path_Nas space $count1 | grep -i "used" | awk -F ' ' '{print $6}')
+          tobyte $chper
+          chper=$outbyte          
+          if [ "$chper" -gt 0 ];then
+          #if [ "$chper" -lt 80 ];then
               nonas=0
               break
           fi
@@ -425,9 +425,9 @@ done < $path_conf
         echo "ERROR -- No cloud available or empty all storage" >> $path_log   
       else
         ########################## CHOOSE FILE ##############################        
-      echo "choosefile"
-      echo "cmd $cmd"
-      echo "path full $path_full"
+      #echo "choosefile"
+      #echo "cmd $cmd"
+      #echo "path full $path_full"
       while read line
         do
           if [ `echo "$line" | grep -c "54211534" ` -gt 0 ]
@@ -453,7 +453,10 @@ done < $path_conf
                 date=${date:0:10}
               fi                          
             else
-              echo "NAS DATE SIZE"
+              #Not Complete              
+              size=$(echo "$result" | grep -i "Size" | awk -F ' ' '{print $2}')
+              date=$(echo "$result" | grep -i "Date" | awk -F ' ' '{print $2}')              
+              date=$(date +%F -d "$date")
             fi            
             #echo "Size: $size"
             #echo "Date: $date"
@@ -466,7 +469,7 @@ done < $path_conf
               echo "SKIP -- lastupdate -- $line"
             else
               #check Max File Size
-              if [ "$nqs" -le "$qs" ]
+              if [ "$nqs" -le "$qs" ] 
               then
                 if [ "$size" -ge "$mfs" ]
                 then
@@ -488,8 +491,7 @@ done < $path_conf
                       eval "$cmd $id $path_tempfile "
                     fi                          
                   else                                        
-                    eval "$cmd $id $path_tempfile$cut_a"
-                    echo "NAS Move"
+                    eval "$cmd $id $path_tempfile$cut_a"                    
                   fi
                   #Upload File To Hadoop 
                   path_toupload=$(echo "$line" | awk -F ' ' '{print $1}')                
@@ -502,14 +504,18 @@ done < $path_conf
                     #Remove line To Upload , File in cloud All 
                     tmp=$(grep -v "$path_toupload" $path_full)                  
                     tmp2=$(grep -v "$path_toupload" $path_file_a)
-                    if [ "$tmp" = "" ] && [ "$tmp2" = "" ]                 
+                    if [ "$tmp" = "" ]                 
                     then
-                      echo "" > $path_full && sed '/^\s*$/d' $path_full > $path_temptxt && mv $path_temptxt $path_full
+                      echo "" > $path_full && sed '/^\s*$/d' $path_full > $path_temptxt && mv $path_temptxt $path_full                      
+                    else
+                      grep -v "$path_toupload" $path_full > $path_temptxt && mv $path_temptxt $path_full                      
+                    fi
+                    if [ "$tmp2" = "" ]                 
+                    then
                       echo "" > $path_file_a && sed '/^\s*$/d' $path_file_a > $path_temptxt && mv $path_temptxt $path_file_a
                     else
-                      grep -v "$path_toupload" $path_full > $path_temptxt && mv $path_temptxt $path_full
                       grep -v "$path_toupload" $path_file_a > $path_temptxt && mv $path_temptxt $path_file_a
-                    fi
+                    fi                                        
                      #Remove file in cloud,NAS
                     if [ "$nonas" -eq 1 ]
                     then                        
@@ -521,8 +527,7 @@ done < $path_conf
                         eval "$cmd3 $id "
                       fi                          
                     else                                        
-                      eval "$cmd3 $id "
-                      echo "NAS"
+                      eval "$cmd3 $id "                      
                     fi
                   else
                     echo "Error to move file to Hadoop --- $line"

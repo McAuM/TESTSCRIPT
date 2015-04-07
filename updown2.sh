@@ -57,7 +57,7 @@ do
    fi    
 done
 
-echo "account ${account[@]}"
+#echo "account ${account[@]}"
 
 	count=0
 	# Upload 
@@ -90,7 +90,7 @@ echo "account ${account[@]}"
 		time[$count]=99999
 	fi
 	# END UPLOAD
-    echo "Upload Time: ${time[@]}"
+    #echo "Upload Time: ${time[@]}"
 
 	count=0
  	# Download 	
@@ -128,7 +128,7 @@ echo "account ${account[@]}"
 		time2[$count]=99999
 	fi
 
-	echo -e "$Download Time: ${time2[@]}"
+	#echo -e "$Download Time: ${time2[@]}"
  	rm -rf /home/hadoop/TESAPI/TESTSCRIPT/upload_test
  	if [ "${account[0]}" -ne 0 ]; then 	
 	 	id=$(java -jar $path_Box listingAll ${account[0]} | grep upload_test | awk '{print $NF}')

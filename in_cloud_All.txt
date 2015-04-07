@@ -1,0 +1,7 @@
+54211534@kmutt.ac.th/home/CPE403.pdf /home/hadoop/TESAPI/TESTSCRIPT/in_gdrive1.txt
+54211534@kmutt.ac.th/home/G50-Chapter3-22Jan15.docx /home/hadoop/TESAPI/TESTSCRIPT/in_gdrive1.txt
+54211534@kmutt.ac.th/home/1016003_10203404234364917_7517711699894853077_o.jpg /home/hadoop/TESAPI/TESTSCRIPT/in_gdrive1.txt
+54211534@kmutt.ac.th/home/789798.png /home/hadoop/TESAPI/TESTSCRIPT/in_gdrive1.txt
+54211534@kmutt.ac.th/home/Capture.PNG /home/hadoop/TESAPI/TESTSCRIPT/in_NAS1.txt
+54211534@kmutt.ac.th/home/TPSI.txt /home/hadoop/TESAPI/TESTSCRIPT/in_NAS1.txt
+54211534@kmutt.ac.th/home/test.txt /home/hadoop/TESAPI/TESTSCRIPT/in_NAS1.txt

@@ -111,6 +111,11 @@ caluseper(){
  nowspaceper=$(($nowspaceper / 4 ))
  return 1
 }
+strindex() { 
+  x="${1%%$2*}"
+  [[ $x = $1 ]] && indexx="-1" || indexx=${#x}
+  return 1
+}
 cutfile(){
   cut_all=$1
   cut_a=$(awk -F'/' '{ print $NF }' <<< $cut_all)
@@ -143,7 +148,7 @@ nowdatesystem=$(date +"%Y-%m-%d")
 path_Dbox="/home/hadoop/TESAPI/TESTSCRIPT/Dropbox.jar"
 path_Box="/home/hadoop/TESAPI/TESTSCRIPT/box.jar"
 path_Gdrive="/home/hadoop/TESAPI/TESTSCRIPT/gdrive.jar"
-path_Nas="/home/hadoop/TESAPI/TESTSCRIPT/nasapi"
+path_Nas="/home/hadoop/TESAPI/TESTSCRIPT/nasapi.sh"
 
 tfile="/home/hadoop/TESAPI/TESTSCRIPT/token.pcs" 
 
@@ -255,16 +260,16 @@ done < $path_conf
       #choose NAS
       nonas=1
       count1=1
-      chper=81
+      #chper=81
       line=$(awk 'END{print}' $path_conf_a4)
       for word in $line 
       do 
         if [ "$word" -ne 0 ]; then      
-          #chper=$(sh $path_Nas space $count1 | grep -i "free" | awk -F ' ' '{print $6}')
-          #tobyte $chper
-          #chper=$outbyte
-          #if [ "$chper" -gt "$qs" ];then
-          if [ "$chper" -lt 80 ];then
+          chper=$(sh $path_Nas space $count1 | grep -i "free" | awk -F ' ' '{print $6}')
+          tobyte $chper
+          chper=$outbyte
+          if [ "$chper" -gt "$qs" ];then
+          #if [ "$chper" -lt 80 ];then
               nonas=0
               break
           fi
@@ -329,7 +334,8 @@ done < $path_conf
                         #check usespaceper          
                         chper=$(java -jar $path_Dbox space $tfile$count2 | grep -i "free" | awk -F ' ' '{print $6}')                                          
                         tobyte $chper
-                        chper=$outbyte 
+                        chper=$outbyte
+                        echo "Dropbox chper= $chper , Quesize: $qt" 
                         if [ "$chper" -gt "$qs" ];then
                           Path_java=$path_Dbox
                           flag=1                  
@@ -461,6 +467,7 @@ done < $path_conf
                       echo "SKIP -- oversize -- $line"
                   else                    
                     cutfile $line #a only fliename
+                    cutfolder $line #b2 no /
                     cutfilefolder $line #b have /
                     cutfilefolder2 $line #b2 no /
                     path_toupload="$path_tempfile/$cut_a"                    
@@ -477,6 +484,10 @@ done < $path_conf
                       else                        
                         nqs=$(($nqs + $size_of_file))                                              
                         # START TO MOVE
+                        if [ "$nonas" -eq 0 ]
+                        then
+                          cut_b=$cut_c                          
+                        fi
                         id=$(eval "$cmd $path_toupload $cut_b" | awk '{print $NF}')
                         echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b"
                         echo "MOVE -- $size_of_file -- $path_toupload -- $cut_b" >> $path_log
@@ -508,7 +519,7 @@ done < $path_conf
                           fi                          
                         else                          
                           echo "$cut_b2 $path_file_NAS$count1.txt" >> $path_file_a
-                          #echo "$cut_b2 $id" >> $path_file_NAS$count1.txt
+                          echo "$cut_b2 $id" >> $path_file_NAS$count1.txt
                         fi                      
                         hadoop dfs -rm $cut_b2
                         hadoop dfs -touchz $cut_b2 
