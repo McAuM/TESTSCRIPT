@@ -463,7 +463,7 @@ done < $path_conf
             
             #check Last Update
             caldate $date $nowdatesystem
-            if [ "$day" -lt "$ltu" ] 
+            if [ "$day" -lt "$ltu" ] # not Complete
             then
               free1 2 #don't get file more than ltu
               echo "SKIP -- lastupdate -- $line"
