@@ -18,13 +18,13 @@ free1(){
 
 createpathfile(){
  createpathfilecar=$1
- hadoop dfs -lsr > $path_lsr
+ $hadoophome dfs -lsr > $path_lsr
  echo '' >>$path_full
  sed '/^\s*$/d' $path_full > $path_blanktext && mv $path_blanktext $path_full
  while read line || [ -n "$line" ]
  do
    linepath=$(awk -F' ' '{ print $8 }' <<< $line)
-   hadoop dfs -test -d $linepath
+   $hadoophome dfs -test -d $linepath
    ret=$? 
    if [[ $ret -eq 0 ]]
    then
@@ -53,7 +53,7 @@ clear_end(){
  rm -rf $path_tempfile
  mkdir $path_tempfile
  rm -rf $path_temptxt
- hadoop dfs -rmr .Trash/*
+ $hadoophome dfs -rmr .Trash/*
  return 1
 }
 
@@ -90,7 +90,7 @@ caldate(){
 
 caluseper(){
  caluseperper2=$1
- hadoop dfsadmin -report > $path_temptxt
+ $hadoophome dfsadmin -report > $path_temptxt
  nowspaceper=0
  while read line || [ -n "$line" ]
  do
@@ -104,11 +104,11 @@ caluseper(){
     #echo "linepath2 -- $linepath2"
     #echo "linepath3 -- $linepath3"
     nowspaceper=$(($nowspaceper + $linepath2))
+    break
     #echo "nowspaceper----$nowspaceper"
    fi
  done < $path_temptxt
-
- nowspaceper=$(($nowspaceper / 4 ))
+ #nowspaceper=$(($nowspaceper / 4))
  return 1
 }
 strindex() { 
@@ -182,7 +182,7 @@ date2=$(date)
 
 #variable Configuration
 nqs=0 #now queue size
-total=144118906880
+total=206421377024  
 $onoff # on-off
 $maxper #max use space (%)
 $medper #medium use space (%)
@@ -230,18 +230,16 @@ done < $path_conf
   echo -ne "Waiting for initial..."
    
   #read local space to nowspaceper
-  caluseper 100
-
+  caluseper 100  
   # tran mb to byte
   tobyte $mfs
   mfs=$outbyte  
   qs=$(($nowspaceper-medper))
   qs=$(($qs*$total))
   qs=$(($qs/100))
-  qs=1000000
-  echo "[OK]"    
-  echo "now spaceper is: $nowspaceper"
-  echo "que size is : $qs"    
+  qs=$(($qs/5))
+  #qs=1000000
+  echo "[OK]"      
   #nowspaceper=77
     
   #echo "Max file size : $mfs"
@@ -252,11 +250,14 @@ done < $path_conf
     if [ "$nowspaceper" -lt "$maxper" ]
     then
       echo "less then 'space use' configure"      
-    else      
-      echo "START PROCESS"
-      cmd=""      
+    else
+      #echo "now spaceper is: $nowspaceper"
+      #echo "que size is : $qs"        
+      #echo "START PROCESS"
+      cmd=""
+      echo "6666666666" > /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt            
       createpathfile fromlsr
-
+      echo "5555555555" > /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt
       #choose NAS
       nonas=1
       count1=1
@@ -265,7 +266,7 @@ done < $path_conf
       for word in $line 
       do 
         if [ "$word" -ne 0 ]; then      
-          chper=$(sh $path_Nas space $count1 | grep -i "free" | awk -F ' ' '{print $6}')
+          chper=$(sh $path_Nas usespace $count1 /Data | grep -i "free" | awk -F ' ' '{print $6}')
           tobyte $chper
           chper=$outbyte
           if [ "$chper" -gt "$qs" ];then
@@ -363,7 +364,7 @@ done < $path_conf
                    done           
                 done     
             done
-          #echo "Priority java $Path_java with account $count2"
+          echo "Choose Priority with $Path_java with account $count2"
           if [ "$Path_java" =  "$path_Box" ]; then  
             cmd="$javahome -jar $Path_java upload $count2"
             path_log="$path_log_box"
@@ -410,7 +411,7 @@ done < $path_conf
               Path_java=$path_Gdrive
             fi
             count3=${account[$choose_base]}
-            #echo "Base Performance java $Path_java with account $count3"          
+            echo "Choose Base Performance with $Path_java with account $count3"          
             if [ "$Path_java" =  "$path_Box" ]; then  
               cmd="$javahome -jar $Path_java upload $count3"
               path_log="$path_log_box"
@@ -425,12 +426,13 @@ done < $path_conf
         fi
       else #Upload NAS          
           echo "choose 2nd Storage with NAS "
+          echo "Choose NAS with account $count1"
           cmd="sh $path_Nas upload $count1"
           path_log="$path_log_NAS"
           
       fi
       ####################  END Choose Secondary Stroage ######################
-
+      echo "666666" >> /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt
       if [ "$nonas" -eq 1 ] &&  [ "$nocloud" -eq 1 ]
       then
         echo "ERROR -- No cloud available or not enough storage" >> $path_log
@@ -445,7 +447,8 @@ done < $path_conf
               free1 1 #don't in trash and revision
             else
               echo "CHECKING... -- $line"
-              hadoop dfs -stat $line > $path_temptxt
+              echo "77777777" >> /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt
+              $hadoophome dfs -stat $line > $path_temptxt
               valuetmp=$(<$path_temptxt)
               filedate=${valuetmp:0:10}
               caldate $filedate $nowdatesystem
@@ -456,7 +459,7 @@ done < $path_conf
                 echo "SKIP -- lastupdate -- $line"
               else
                 # check max file size
-                size=$(hadoop dfs -dus $line)
+                size=$($hadoophome dfs -dus $line)
                 size_of_file=$(awk -F' ' '{ print $2 }' <<< $size)                
                 #echo "size = $size_of_file"                
                 if [ "$nqs" -le "$qs" ]
@@ -471,7 +474,7 @@ done < $path_conf
                     cutfilefolder $line #b have /
                     cutfilefolder2 $line #b2 no /
                     path_toupload="$path_tempfile/$cut_a"                    
-                    hadoop dfs -get $line $path_tempfile
+                    $hadoophome dfs -get $line $path_tempfile
                     ret=$?
                     if [ "$ret" -eq 0 ]
                     then
@@ -521,8 +524,9 @@ done < $path_conf
                           echo "$cut_b2 $path_file_NAS$count1.txt" >> $path_file_a
                           echo "$cut_b2 $id" >> $path_file_NAS$count1.txt
                         fi                      
-                        hadoop dfs -rm $cut_b2
-                        hadoop dfs -touchz $cut_b2 
+                        $hadoophome dfs -rm $cut_b2
+                        $hadoophome dfs -touchz $cut_b2
+                        echo "8888888" >> /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt 
                       fi                      
                     else                      
                       echo "ERROR -- fail to get file from local -- $line"                      

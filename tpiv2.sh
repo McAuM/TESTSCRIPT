@@ -28,7 +28,7 @@ clear_end(){
  rm -rf $path_tempfile
  mkdir $path_tempfile
  rm -rf $path_temptxt
- hadoop dfs -rmr .Trash/*
+ $hadoophome dfs -rmr .Trash/*
  return 1
 }
 
@@ -65,13 +65,12 @@ caldate(){
 
 caluseper(){
  caluseperper2=$1
- hadoop dfsadmin -report > $path_temptxt
+ $hadoophome dfsadmin -report > $path_temptxt
  nowspaceper=0
  while read line || [ -n "$line" ]
  do
    if [ `echo "$line" | grep -c "DFS Used%" ` -gt 0 ]
-   then
-    
+   then    
     linepath=$(awk -F' ' '{ print $3 }' <<< $line)
     linepath2=$(awk -F'%' '{ print $1 }' <<< $linepath)
     linepath2=$(awk -F'.' '{ print $1 }' <<< $linepath2)    
@@ -79,11 +78,11 @@ caluseper(){
     #echo "linepath2 -- $linepath2"
     #echo "linepath3 -- $linepath3"
     nowspaceper=$(($nowspaceper + $linepath2))
+    break
     #echo "nowspaceper----$nowspaceper"
    fi
  done < $path_temptxt
-
- nowspaceper=$(($nowspaceper / 4 ))
+ #nowspaceper=$(($nowspaceper / 4 ))
  return 1
 }
 cutfile(){
@@ -149,7 +148,7 @@ date2=$(date)
 
 #variable Configuration
 nqs=0 #now queue size
-total=144120455168
+total=206421377024 
 $onoff # on-off
 $maxper #max use space (%)
 $medper #medium use space (%)
@@ -202,15 +201,17 @@ done < $path_conf
   # tran mb to byte 
   tobyte $mfs
   mfs=$outbyte 
-  qs=$((minper - nowspaceper))  
+  qs=$((medper - nowspaceper))  
   qs=$(($qs * $total))
   qs=$(($qs/100))
-  echo "qs: $qs"
-  echo "[OK]"    
+  qs=$(($qs/5))
+  echo "[OK]"  
+  #echo "now spaceper is: $nowspaceper"
+  #echo "que size is : $qs"  
   #echo "$nowspaceper"  
   #START PROCCESS
-  nowspaceper=9
-  qs=1000000  
+  #nowspaceper=9
+  #qs=2882378137
   #echo "Max file size : $mfs"      
   if [ "$onoff" -eq "0" ]
   then
@@ -233,11 +234,12 @@ done < $path_conf
       for word in $line 
       do 
         if [ "$word" -ne 0 ]; then      
-          chper=$(sh $path_Nas space $count1 | grep -i "used" | awk -F ' ' '{print $6}')
+          chper=$(sh $path_Nas usespace $count1 /Data | grep -i "used" | awk -F ' ' '{print $6}')
           tobyte $chper
-          chper=$outbyte          
+          chper=$outbyte                
           if [ "$chper" -gt 0 ];then
           #if [ "$chper" -lt 80 ];then
+
               nonas=0
               break
           fi
@@ -333,7 +335,7 @@ done < $path_conf
                    done           
                 done     
             done
-          #echo "Priority java $Path_java with account $count2"
+          echo "Choose Priority with $Path_java with account $count2"
           if [ "$Path_java" =  "$path_Box" ]; then  
             cmd="$javahome -jar $Path_java download2 $count2"
             cmd2="$javahome -jar $Path_java metadata $count2"
@@ -388,7 +390,8 @@ done < $path_conf
             then
               Path_java=$path_Gdrive
             fi
-            count3=${account[$choose_base]}                    
+            count3=${account[$choose_base]} 
+            echo "Choose Base Performance with $Path_java with account $count3"                   
             if [ "$Path_java" =  "$path_Box" ]; then  
               cmd="$javahome -jar $Path_java download2 $count3"
               cmd2="$javahome -jar $Path_java metadata $count3"
@@ -411,7 +414,8 @@ done < $path_conf
           fi              
         fi
       else #Upload NAS          
-          echo "choose 2nd Storage with NAS "          
+          echo "choose 2nd Storage with NAS "
+          echo "Choose NAS with account $count1"          
           cmd="sh $path_Nas download $count1"          
           cmd2="sh $path_Nas metadata $count1"          
           cmd3="sh $path_Nas delete $count1"
@@ -430,7 +434,7 @@ done < $path_conf
       #echo "path full $path_full"
       while read line
         do
-          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ]
+          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ] 
           then             
             echo "CHECKING... -- $line"
             # Get Date and File Size                          
@@ -476,8 +480,7 @@ done < $path_conf
                   free1 3 # overload size
                   echo "SKIP -- oversize -- $line"
                 else
-                  #START MOVE
-                  echo "START MOVE"
+                  #START MOVE                  
                   cutfile $line # cut file 
                   nqs=$(($nqs + $size))
                   #Load File To Local
@@ -493,9 +496,9 @@ done < $path_conf
                   else                                        
                     eval "$cmd $id $path_tempfile$cut_a"                    
                   fi
-                  #Upload File To Hadoop 
+                  #Upload File To Hadoop
                   path_toupload=$(echo "$line" | awk -F ' ' '{print $1}')                
-                  hadoop dfs -moveFromLocal $path_tempfile$cut_a $path_toupload
+                  $hadoophome dfs -moveFromLocal $path_tempfile$cut_a $path_toupload
                   ret=$?
                   if [ "$ret" -eq 0 ]
                   then                  
