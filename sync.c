@@ -12,7 +12,7 @@
 #include <axiom_soap_body.h>
 #include <axutil_param.h>
 #include <stdio.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 #include <mysql.h>
 #include "sha1.h"
 
@@ -430,7 +430,7 @@ axis2_download(
     char buffstr[255];
     char str2[255];
     int len_tpi;
-    FILE *fp_tpi,*ptr_tmp;
+    FILE *fp_tpi,*ptr_tmp,*fp_tpi2;
     char token_tpi1[255]="/home/hadoop/test/token.pcs1";
     char token_tpi2[255]="/home/hadoop/test/token.pcs2";
     char token_tpi3[255]="/home/hadoop/test/token.pcs3";
@@ -452,10 +452,22 @@ axis2_download(
 		}
 		*/
     //tpi2
+    char cmd[255],cmd2[255];
     char path_conf_All[255]="/home/hadoop/TESAPI/TESTSCRIPT/set_Auto.txt";
     char path_incloud_all[255]="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud_All.txt";
+    char tfile[255]="/home/hadoop/TESAPI/TESTSCRIPT/token.pcs";
+
     char path_cmd_NAS[255]="/home/hadoop/TESAPI/TESTSCRIPT/nasapi.sh";
+    char path_cmd_box[255]="/home/hadoop/TESAPI/TESTSCRIPT/box.jar";
+    char path_cmd_Dbox[255]="/home/hadoop/TESAPI/TESTSCRIPT/Dropbox.jar";
+    char path_cmd_gdrive[255]="/home/hadoop/TESAPI/TESTSCRIPT/gdrive.jar";
+
     char path_in_NAS[255]="/home/hadoop/TESAPI/TESTSCRIPT/in_NAS1.txt";
+    char path_in_NAS2[255]="/home/hadoop/TESAPI/TESTSCRIPT/in_NAS";
+    char path_in_box[255]="/home/hadoop/TESAPI/TESTSCRIPT/in_box";
+    char path_in_Dbox[255]="/home/hadoop/TESAPI/TESTSCRIPT/in_Dbox";
+    char path_in_gdrive[255]="/home/hadoop/TESAPI/TESTSCRIPT/in_gdrive";
+
     char path_tempfile[255]="/home/hadoop/TESAPI/TESTSCRIPT/tempfile/";
     char path_temptext[255]="/home/hadoop/TESAPI/TESTSCRIPT/temp.txt";
     char path_temptext2[255]="/home/hadoop/TESAPI/TESTSCRIPT/temp2.txt";
@@ -610,85 +622,354 @@ axis2_download(
 	  	fclose(fp_tpi);
 	  	//end3
 
-      fp_tpi = fopen(path_in_NAS, "r");
+      int acc;
+      int tmpchk;
+      fp_tpi = fopen(path_incloud_all, "r");
       if( fp_tpi != NULL ){
         while ( !feof(fp_tpi ) ){
            memset(buffstr, '\0', sizeof( buffstr) );
-           fgets(buffstr, 255, (FILE*)fp_tpi);
-           //printf("%s", buffstr );
-           strcpy(str2, buffstr);
-           //sprintf(command, "hadoop dfs -test -d \"/user/hadoop/%s/%s\"", param2_str, param3_str);
+           fgets(buffstr, 255, (FILE*)fp_tpi);           
+           strcpy(str2, buffstr);           
           len_tpi = strlen(str2);
           if( str2[len_tpi-1] == '\n' || str2[len_tpi-1] == '\r' ){
               str2[len_tpi-1] = '\0';
           }else{
-          }
-          //printf("str2 is %s\n", str2 );         
-          // split space bar and keep in variable            
-          char *tmpstr2, *saveptr, *tmpID;
-          char *tmprest = str2;                    
-          tmpstr2 = strtok_r(tmprest, " ", &saveptr);
-          tmpID = strtok_r(NULL, " ", &saveptr);
-          if (tmpstr2==NULL){
-            tmpstr2="";
-          }      
-          //printf("tmpstr2 is %s\n", tmpstr2 );
-          //printf("tmpID is %s\n", tmpID );    
-          if(strcmp(str,tmpstr2)==0){             
-             //printf("Yes\n");                          
-             sprintf(command,"sh %s download 1 %s %s%s",path_cmd_NAS,tmpID,path_tempfile,filename_tpi);
-             system(command);
-             sprintf(command,"sh %s delete 1 %s ",path_cmd_NAS,tmpID);
-             system(command);
-             sprintf(command,"hadoop dfs -moveFromLocal %s%s %s",path_tempfile,filename_tpi,str2);           
-             system(command);
-             
-            // delete in_cloud                                              
-              sprintf(command,"grep -v %s %s > %s",str2,path_in_NAS,path_temptext2);
-              system(command);
-              ptr_tmp = fopen(path_temptext2, "r");
-              if( ptr_tmp != NULL ){
-              memset(buffstr, '\0', sizeof( buffstr) );
-              fgets(buffstr, 255, (FILE*)ptr_tmp);
-              printf("buffstr %s\n",buffstr);       
-              if ( strcmp(buffstr,"")!=0 ){
-                sprintf(command,"grep -v %s %s > %s && mv %s %s",str2,path_in_NAS,path_temptext,path_temptext,path_in_NAS);                 
-                system(command);
-              }
-              else{
-                sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",path_in_NAS,path_in_NAS,path_temptext,path_temptext,path_in_NAS);
-                system(command);
-              }                
-            }
-            fclose(ptr_tmp);
-            
-            // delete big_cloud
-              sprintf(command,"grep -v %s %s > %s",str2,path_incloud_all,path_temptext2);
-              system(command);
-              ptr_tmp = fopen(path_temptext2, "r");
-              if( ptr_tmp != NULL ){
-              memset(buffstr, '\0', sizeof( buffstr) );
-              fgets(buffstr, 255, (FILE*)ptr_tmp);
-              printf("buffstr %s\n",buffstr);       
-              if ( strcmp(buffstr,"")!=0 ){
-                sprintf(command,"grep -v %s %s > %s && mv %s %s",str2,path_incloud_all,path_temptext,path_temptext,path_incloud_all);                 
-                system(command);
-              }
-              else{
-                sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",path_incloud_all,path_incloud_all,path_temptext,path_temptext,path_incloud_all);
-                system(command);
-              }                
-            }
-            fclose(ptr_tmp);
+          }              
+          if(strcmp(str2,"")==0){
             break;
-           }else{
-             //printf("No file\n");    
+          }
+          // split space bar and keep in variable            
+           char *tmpPath1, *saveptr_2, *tmpPath2;
+           char *tmprest_2 = str2;
+           char Path2[255];           
+           tmpPath1 = strtok_r(tmprest_2, " ", &saveptr_2);
+           tmpPath2 = strtok_r(NULL, " ", &saveptr_2);
+           strcpy(Path2,tmpPath2);
+           if (tmpPath1==NULL){
+             tmpPath1="";
            }
-           
+           len_tpi = strlen(Path2);               
+           acc = atoi(&Path2[len_tpi-5]);           
+
+           if (strcmp(str,tmpPath1)==0){
+           //Check Cloud
+           char inPath[255];
+           char str2_2[255];
+           tmpchk = 0;
+             if(strstr(Path2,"NAS")!=NULL){
+                printf("NAS\n");
+                strcpy(inPath,path_in_NAS2);
+                strcat(inPath,&Path2[len_tpi-5]);
+                fp_tpi2 = fopen(inPath, "r");
+                if( fp_tpi2 != NULL ){
+                  while ( !feof(fp_tpi2)){                  
+                      memset(buffstr, '\0', sizeof( buffstr) );
+                      fgets(buffstr, 255, (FILE*)fp_tpi2);
+                      strcpy(str2_2, buffstr);
+                      len_tpi = strlen(str2_2);
+                      if( str2_2[len_tpi-1] == '\n' || str2_2[len_tpi-1] == '\r' ){
+                        str2_2[len_tpi-1] = '\0';
+                      }else{
+                      }
+                      char *tmpPath1_2, *saveptr_2_2, *tmpPath2_2;
+                      char *tmprest_2_2 = str2_2;
+                      tmpPath1_2 = strtok_r(tmprest_2_2, " ", &saveptr_2_2);
+                      tmpPath2_2 = strtok_r(NULL, " ", &saveptr_2_2);
+                      //printf("tmpPath1_2 %s \n",tmpPath1_2);                    
+                      //printf("tmpPath2_2 %s \n",tmpPath2_2);
+                      if (tmpPath1_2==NULL){
+                        tmpPath1_2="";
+                      }
+                      if(strcmp(str,tmpPath1_2)==0){
+                        sprintf(command,"sh %s download %d %s %s%s",path_cmd_NAS,acc,tmpPath2_2,path_tempfile,filename_tpi);
+                        system(command);
+                        sprintf(command,"sh %s delete %d %s ",path_cmd_NAS,acc,tmpPath2_2);
+                        system(command);
+                        sprintf(command,"hadoop dfs -moveFromLocal %s%s %s",path_tempfile,filename_tpi,tmpPath1_2);           
+                        system(command);
+
+                      // delete in_cloud                                              
+                        sprintf(command,"grep -v %s %s > %s",tmpPath1_2,inPath,path_temptext2);
+                        system(command);
+                        ptr_tmp = fopen(path_temptext2, "r");
+                        if( ptr_tmp != NULL ){
+                          memset(buffstr, '\0', sizeof( buffstr) );
+                          fgets(buffstr, 255, (FILE*)ptr_tmp);                    
+                          if ( strcmp(buffstr,"")!=0 ){
+                            sprintf(command,"grep -v %s %s > %s && mv %s %s",tmpPath1_2,inPath,path_temptext,path_temptext,inPath);                 
+                            system(command);
+                          }
+                          else{
+                            sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",inPath,inPath,path_temptext,path_temptext,inPath);
+                            system(command);
+                          }                
+                      }
+                      fclose(ptr_tmp);
+
+                      // delete big_cloud
+                      sprintf(command,"grep -v %s %s > %s",tmpPath1_2,path_incloud_all,path_temptext2);
+                      system(command);
+                      ptr_tmp = fopen(path_temptext2, "r");
+                      if( ptr_tmp != NULL ){
+                        memset(buffstr, '\0', sizeof( buffstr) );
+                        fgets(buffstr, 255, (FILE*)ptr_tmp);                     
+                        if ( strcmp(buffstr,"")!=0 ){
+                          sprintf(command,"grep -v %s %s > %s && mv %s %s",tmpPath1_2,path_incloud_all,path_temptext,path_temptext,path_incloud_all);                 
+                          system(command);
+                        }
+                        else{
+                          sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",path_incloud_all,path_incloud_all,path_temptext,path_temptext,path_incloud_all);
+                          system(command);
+                        }                
+                      }
+                      fclose(ptr_tmp);                      
+                      break;
+                      }
+                      else{
+
+                      }
+                    
+                  }
+                }
+                fclose(fp_tpi2);                           
+             }                              
+             else if(strstr(Path2,"Dbox")!=NULL){
+                printf("Dbox\n");
+                strcpy(inPath,path_in_Dbox);
+                strcat(inPath,&Path2[len_tpi-5]);
+                fp_tpi2 = fopen(inPath, "r");
+                if( fp_tpi2 != NULL ){
+                  while ( !feof(fp_tpi2)){                  
+                      memset(buffstr, '\0', sizeof( buffstr) );
+                      fgets(buffstr, 255, (FILE*)fp_tpi2);
+                      strcpy(str2_2, buffstr);
+                      len_tpi = strlen(str2_2);
+                      if( str2_2[len_tpi-1] == '\n' || str2_2[len_tpi-1] == '\r' ){
+                        str2_2[len_tpi-1] = '\0';
+                      }else{
+                      }
+                      char *tmpPath1_2, *saveptr_2_2, *tmpPath2_2;
+                      char *tmprest_2_2 = str2_2;
+                      tmpPath1_2 = strtok_r(tmprest_2_2, " ", &saveptr_2_2);
+                      tmpPath2_2 = strtok_r(NULL, " ", &saveptr_2_2);
+                      //printf("tmpPath1_2 %s \n",tmpPath1_2);                    
+                      //printf("tmpPath2_2 %s \n",tmpPath2_2);
+                      if (tmpPath1_2==NULL){
+                        tmpPath1_2="";
+                      }
+                      if(strcmp(str,tmpPath1_2)==0){
+                        sprintf(command,"java -jar %s download %s%d %s%s %s",path_cmd_Dbox,tfile,acc,path_tempfile,filename_tpi,tmpPath2_2);
+                        system(command);
+                        sprintf(command,"java -jar %s delete %s%d %s ",path_cmd_Dbox,tfile,acc,tmpPath2_2);
+                        system(command);
+                        sprintf(command,"hadoop dfs -moveFromLocal %s%s %s",path_tempfile,filename_tpi,tmpPath1_2);           
+                        system(command);
+
+                      // delete in_cloud                                              
+                        sprintf(command,"grep -v %s %s > %s",tmpPath1_2,inPath,path_temptext2);
+                        system(command);
+                        ptr_tmp = fopen(path_temptext2, "r");
+                        if( ptr_tmp != NULL ){
+                          memset(buffstr, '\0', sizeof( buffstr) );
+                          fgets(buffstr, 255, (FILE*)ptr_tmp);                    
+                          if ( strcmp(buffstr,"")!=0 ){
+                            sprintf(command,"grep -v %s %s > %s && mv %s %s",tmpPath1_2,inPath,path_temptext,path_temptext,inPath);                 
+                            system(command);
+                          }
+                          else{
+                            sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",inPath,inPath,path_temptext,path_temptext,inPath);
+                            system(command);
+                          }                
+                      }
+                      fclose(ptr_tmp);
+
+                      // delete big_cloud
+                      sprintf(command,"grep -v %s %s > %s",tmpPath1_2,path_incloud_all,path_temptext2);
+                      system(command);
+                      ptr_tmp = fopen(path_temptext2, "r");
+                      if( ptr_tmp != NULL ){
+                        memset(buffstr, '\0', sizeof( buffstr) );
+                        fgets(buffstr, 255, (FILE*)ptr_tmp);                     
+                        if ( strcmp(buffstr,"")!=0 ){
+                          sprintf(command,"grep -v %s %s > %s && mv %s %s",tmpPath1_2,path_incloud_all,path_temptext,path_temptext,path_incloud_all);                 
+                          system(command);
+                        }
+                        else{
+                          sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",path_incloud_all,path_incloud_all,path_temptext,path_temptext,path_incloud_all);
+                          system(command);
+                        }                
+                      }
+                      fclose(ptr_tmp);                      
+                      break;
+                      }
+                      else{
+
+                      }
+                    
+                  }
+                }
+                fclose(fp_tpi2);  
+             }
+             else if(strstr(Path2,"box")!=NULL){
+                printf("box\n");
+                strcpy(inPath,path_in_box);
+                strcat(inPath,&Path2[len_tpi-5]);
+                fp_tpi2 = fopen(inPath, "r");
+                if( fp_tpi2 != NULL ){
+                  while ( !feof(fp_tpi2)){                  
+                      memset(buffstr, '\0', sizeof( buffstr) );
+                      fgets(buffstr, 255, (FILE*)fp_tpi2);
+                      strcpy(str2_2, buffstr);
+                      len_tpi = strlen(str2_2);
+                      if( str2_2[len_tpi-1] == '\n' || str2_2[len_tpi-1] == '\r' ){
+                        str2_2[len_tpi-1] = '\0';
+                      }else{
+                      }
+                      char *tmpPath1_2, *saveptr_2_2, *tmpPath2_2;
+                      char *tmprest_2_2 = str2_2;
+                      tmpPath1_2 = strtok_r(tmprest_2_2, " ", &saveptr_2_2);
+                      tmpPath2_2 = strtok_r(NULL, " ", &saveptr_2_2);
+                      //printf("tmpPath1_2 %s \n",tmpPath1_2);                    
+                      //printf("tmpPath2_2 %s \n",tmpPath2_2);
+                      if (tmpPath1_2==NULL){
+                        tmpPath1_2="";
+                      }
+                      if(strcmp(str,tmpPath1_2)==0){
+                        sprintf(command,"java -jar %s download2 %d %s %s",path_cmd_box,acc,tmpPath2_2,path_tempfile);
+                        system(command);
+                        sprintf(command,"java -jar %s delete %d %s ",path_cmd_box,acc,tmpPath2_2);
+                        system(command);
+                        sprintf(command,"hadoop dfs -moveFromLocal %s%s %s",path_tempfile,filename_tpi,tmpPath1_2);           
+                        system(command);
+
+                      // delete in_cloud                                              
+                        sprintf(command,"grep -v %s %s > %s",tmpPath1_2,inPath,path_temptext2);
+                        system(command);
+                        ptr_tmp = fopen(path_temptext2, "r");
+                        if( ptr_tmp != NULL ){
+                          memset(buffstr, '\0', sizeof( buffstr) );
+                          fgets(buffstr, 255, (FILE*)ptr_tmp);                    
+                          if ( strcmp(buffstr,"")!=0 ){
+                            sprintf(command,"grep -v %s %s > %s && mv %s %s",tmpPath1_2,inPath,path_temptext,path_temptext,inPath);                 
+                            system(command);
+                          }
+                          else{
+                            sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",inPath,inPath,path_temptext,path_temptext,inPath);
+                            system(command);
+                          }                
+                      }
+                      fclose(ptr_tmp);
+
+                      // delete big_cloud
+                      sprintf(command,"grep -v %s %s > %s",tmpPath1_2,path_incloud_all,path_temptext2);
+                      system(command);
+                      ptr_tmp = fopen(path_temptext2, "r");
+                      if( ptr_tmp != NULL ){
+                        memset(buffstr, '\0', sizeof( buffstr) );
+                        fgets(buffstr, 255, (FILE*)ptr_tmp);                     
+                        if ( strcmp(buffstr,"")!=0 ){
+                          sprintf(command,"grep -v %s %s > %s && mv %s %s",tmpPath1_2,path_incloud_all,path_temptext,path_temptext,path_incloud_all);                 
+                          system(command);
+                        }
+                        else{
+                          sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",path_incloud_all,path_incloud_all,path_temptext,path_temptext,path_incloud_all);
+                          system(command);
+                        }                
+                      }
+                      fclose(ptr_tmp);                      
+                      break;
+                      }
+                      else{
+
+                      }
+                    
+                  }
+                }
+                fclose(fp_tpi2);
+             }
+             else if(strstr(Path2,"gdrive")!=NULL){
+                printf("gdrive\n");
+                strcpy(inPath,path_in_gdrive);
+                strcat(inPath,&Path2[len_tpi-5]);
+                fp_tpi2 = fopen(inPath, "r");
+                if( fp_tpi2 != NULL ){
+                  while ( !feof(fp_tpi2)){                  
+                      memset(buffstr, '\0', sizeof( buffstr) );
+                      fgets(buffstr, 255, (FILE*)fp_tpi2);
+                      strcpy(str2_2, buffstr);
+                      len_tpi = strlen(str2_2);
+                      if( str2_2[len_tpi-1] == '\n' || str2_2[len_tpi-1] == '\r' ){
+                        str2_2[len_tpi-1] = '\0';
+                      }else{
+                      }
+                      char *tmpPath1_2, *saveptr_2_2, *tmpPath2_2;
+                      char *tmprest_2_2 = str2_2;
+                      tmpPath1_2 = strtok_r(tmprest_2_2, " ", &saveptr_2_2);
+                      tmpPath2_2 = strtok_r(NULL, " ", &saveptr_2_2);
+                      //printf("tmpPath1_2 %s \n",tmpPath1_2);                    
+                      //printf("tmpPath2_2 %s \n",tmpPath2_2);
+                      if (tmpPath1_2==NULL){
+                        tmpPath1_2="";
+                      }
+                      if(strcmp(str,tmpPath1_2)==0){
+                        sprintf(command,"java -jar %s download2 1 %s %s",path_cmd_gdrive,tmpPath2_2,path_tempfile);                      
+                        system(command);
+                        sprintf(command,"java -jar %s delete 1 %s ",path_cmd_gdrive,tmpPath2_2);
+                        system(command);                      
+                        sprintf(command,"hadoop dfs -moveFromLocal %s%s %s",path_tempfile,filename_tpi,tmpPath1_2);                                 
+                        system(command);
+
+                      // delete in_cloud                                              
+                        sprintf(command,"grep -v %s %s > %s",tmpPath1_2,inPath,path_temptext2);
+                        system(command);
+                        ptr_tmp = fopen(path_temptext2, "r");
+                        if( ptr_tmp != NULL ){
+                          memset(buffstr, '\0', sizeof( buffstr) );
+                          fgets(buffstr, 255, (FILE*)ptr_tmp);                    
+                          if ( strcmp(buffstr,"")!=0 ){
+                            sprintf(command,"grep -v %s %s > %s && mv %s %s",tmpPath1_2,inPath,path_temptext,path_temptext,inPath);                 
+                            system(command);
+                          }
+                          else{
+                            sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",inPath,inPath,path_temptext,path_temptext,inPath);
+                            system(command);
+                          }                
+                      }
+                      fclose(ptr_tmp);
+
+                      // delete big_cloud
+                      sprintf(command,"grep -v %s %s > %s",tmpPath1_2,path_incloud_all,path_temptext2);
+                      system(command);
+                      ptr_tmp = fopen(path_temptext2, "r");
+                      if( ptr_tmp != NULL ){
+                        memset(buffstr, '\0', sizeof( buffstr) );
+                        fgets(buffstr, 255, (FILE*)ptr_tmp);                     
+                        if ( strcmp(buffstr,"")!=0 ){
+                          sprintf(command,"grep -v %s %s > %s && mv %s %s",tmpPath1_2,path_incloud_all,path_temptext,path_temptext,path_incloud_all);                 
+                          system(command);
+                        }
+                        else{
+                          sprintf(command,"echo \"\" > %s && sed '/^\\s*$/d' %s > %s && mv %s %s",path_incloud_all,path_incloud_all,path_temptext,path_temptext,path_incloud_all);
+                          system(command);
+                        }                
+                      }
+                      fclose(ptr_tmp);                      
+                      break;
+                      }
+                      else{
+
+                      }
+                    
+                  }
+                }
+                fclose(fp_tpi2);
+             }
+             break;
+           } 
         }        
       }      
       fclose(fp_tpi);      
-      //end4
+      //end5
    }
    		sha1_str = sha1(str);
       

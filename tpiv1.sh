@@ -158,6 +158,7 @@ path_conf_a2="/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt"
 path_conf_a3="/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt"
 path_conf_a4="/home/hadoop/TESAPI/TESTSCRIPT/active_Nas.txt"
 path_conf_b="/home/hadoop/TESAPI/TESTSCRIPT/baseperformance.txt"
+path_conf_grate="/home/hadoop/TESAPI/TESTSCRIPT/growthrate.txt"
 
 path_file_a="/home/hadoop/TESAPI/TESTSCRIPT/in_cloud_All.txt" 
 path_file_NAS="/home/hadoop/TESAPI/TESTSCRIPT/in_NAS" 
@@ -193,7 +194,7 @@ $prob #probe checking (day)
 $mfs # max file size (mb)
 $qs # queue size (mb)
 err=1 #error reading flag
-
+$grate_yesterday
 #start read configure
 echo -ne "Reading configure..."
 value=$(<$path_conf)
@@ -209,13 +210,15 @@ do
   	ltu=$(awk -F' ' '{ print $8 }' <<< $line)  	
   	mfs=$(awk -F' ' '{ print $9 }' <<< $line)   	
 done < $path_conf
-	#qs = max - mid	
+grate_yesterday=$(awk 'END{print}' $path_conf_grate)
+
 	  checknumber $onoff
     checknumber $active
   	checknumber $maxper
   	checknumber $medper
   	checknumber $minper
   	checknumber $grate
+    checknumber $grate_yesterday
   	checknumber $prob
   	checknumber $ltu
   	checknumber $mfs
@@ -230,31 +233,37 @@ done < $path_conf
   echo -ne "Waiting for initial..."
    
   #read local space to nowspaceper
-  caluseper 100  
+  caluseper 100
+  grate_yesterday=$(($nowspaceper-$grate_yesterday))  
   # tran mb to byte
   tobyte $mfs
   mfs=$outbyte  
   qs=$(($nowspaceper-medper))
   qs=$(($qs*$total))
   qs=$(($qs/100))
-  qs=$(($qs/5))
-  #qs=1000000
-  echo "[OK]"      
-  #nowspaceper=77
-    
-  #echo "Max file size : $mfs"
+  qs=$(($qs/5))  
+  echo "[OK]"        
+
+  flag=0
   if [ "$onoff" -eq "0" ]
   then
     echo "TPSI mode is >>off<<"
   else
-    if [ "$nowspaceper" -lt "$maxper" ]
+    if [ "$grate_yesterday" -ge "$grate" ]
+    then      
+      #change que size      
+      qs=$(($maxper-medper))
+      qs=$(($qs*$total))
+      qs=$(($qs/100))
+      qs=$(($qs/5))  
+      flag=1           
+    fi
+
+    if [ "$nowspaceper" -lt "$maxper" ] && [ "$flag" -eq 0 ]
     then
-      echo "less then 'space use' configure"      
+      echo "less then 'space use' configure"            
     else
-      #echo "now spaceper is: $nowspaceper"
-      #echo "que size is : $qs"        
-      #echo "START PROCESS"
-      cmd=""
+      cmd=""      
       echo "6666666666" > /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt            
       createpathfile fromlsr
       echo "5555555555" > /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt
@@ -432,7 +441,7 @@ done < $path_conf
           
       fi
       ####################  END Choose Secondary Stroage ######################
-      echo "666666" >> /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt
+      #echo "666666" >> /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt
       if [ "$nonas" -eq 1 ] &&  [ "$nocloud" -eq 1 ]
       then
         echo "ERROR -- No cloud available or not enough storage" >> $path_log
@@ -526,7 +535,7 @@ done < $path_conf
                         fi                      
                         $hadoophome dfs -rm $cut_b2
                         $hadoophome dfs -touchz $cut_b2
-                        echo "8888888" >> /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt 
+                        #echo "8888888" >> /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt 
                       fi                      
                     else                      
                       echo "ERROR -- fail to get file from local -- $line"                      
