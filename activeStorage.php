@@ -60,8 +60,10 @@ if (!is_authed())
 // ____________________________________________________________________________________________________________________________ //
 			$("#save").click(function(){
 				var chkDB = parseInt($('#numAccSaveDB').val());
-//Nas ------------------------------------------------------------------------------------------------------------------------- //
+				var chkGG = parseInt($('#numAccSaveGG').val());
+				var chkBox = parseInt($('#numAccSaveBox').val());
 				var nas = new Array();
+//Nas ------------------------------------------------------------------------------------------------------------------------- //
 				for(i=1; i<=chkNas;i++){
 					nas[i-1] = $('#nas'+i).val();
 					if(nas[i-1]==""){
@@ -77,7 +79,7 @@ if (!is_authed())
 //Dropbox --------------------------------------------------------------------------------------------------------------------- //
 				for(i=1; i<=chkDB;i++){
 					textPriDB[i-1]= $('#pri_drop'+i).val();
-					alert(i+" "+textPriDB[i-1]);
+					//alert(i+" "+textPriDB[i-1]);
 					if(textPriDB[i-1]==""){
 						alert("Please set priority of storage!");
 						$('#pri_drop'+i).focus();
@@ -128,7 +130,7 @@ if (!is_authed())
 				$('#numAccSaveNas').val(numAccSaveNas);
 
 				$.ajax({
-                        url:'uoo.php',
+                        url:'addCloud.php',
                         type:'POST',
                         data:'count1='+count1+'&addNas='+addNas,
                         dataType:'html',
@@ -139,6 +141,7 @@ if (!is_authed())
                     $('#addRow1').html(result);
                 }
 			});
+
 //Dropbox --------------------------------------------------------------------------------------------------------------------- //
 			$('#btn_add2').on('click',function(){
 				var numAccSaveDB = parseInt($('#numAccSaveDB').val());
@@ -147,7 +150,7 @@ if (!is_authed())
 				$('#numAccSaveDB').val(numAccSaveDB);
 
 				$.ajax({
-                        url:'uoo.php',
+                        url:'addCloud.php',
                         type:'POST',
                         data:'count2='+count2+'&addDB='+addDB,
                         dataType:'html',
@@ -156,6 +159,7 @@ if (!is_authed())
              	
                 function callback(result){
                     $('#addRow2').html(result);
+                    //$('#numAccSaveDB').val(numAccSaveDB);
                 }
 			});
 //Google Drive ---------------------------------------------------------------------------------------------------------------- //
@@ -166,7 +170,7 @@ if (!is_authed())
 				$('#numAccSaveGG').val(numAccSaveGG);
 
 				$.ajax({
-                        url:'uoo.php',
+                        url:'addCloud.php',
                         type:'POST',
                         data:'count3='+count3+'&addGG='+addGG,
                         dataType:'html',
@@ -175,6 +179,7 @@ if (!is_authed())
              	
                 function callback(result){
                     $('#addRow3').html(result);
+                    //$('#numAccSaveGG').val(numAccSaveGG);
                 }
 			});
 //Box ------------------------------------------------------------------------------------------------------------------------- //
@@ -185,7 +190,7 @@ if (!is_authed())
 				$('#numAccSaveBox').val(numAccSaveBox);
 
 				$.ajax({
-                        url:'uoo.php',
+                        url:'addCloud.php',
                         type:'POST',
                         data:'count4='+count4+'&addBox='+addBox,
                         dataType:'html',
@@ -194,13 +199,41 @@ if (!is_authed())
              	
                 function callback(result){
                     $('#addRow4').html(result);
+                    //$('#numAccSaveBox').val(numAccSaveBox);
                 }
 			});
 // _____________________________________________________Fucntions by event_____________________________________________________ //
 // ____________________________________________________________________________________________________________________________ //
 		});
-		function GotoPage()
-		{
+		function selectNAS(id){
+			var count1 = parseInt($('#numAccSaveNas').val());			
+			$.ajax({
+                url:'delCloud.php',
+                type:'POST',
+                data:'cloud=NAS&id='+id+'&count1='+count1,
+                dataType:'html',
+                success:callback,
+            });
+            function callback(result){
+            	alert(result);
+             //$('#addRow1').html(result);                    
+            }	   		
+		}
+		function selectgdrive(id){
+			var count3 = parseInt($('#numAccSaveGG').val());			
+			$.ajax({
+                url:'delCloud.php',
+                type:'POST',
+                data:'cloud=gdrive&id='+id+'&count3='+count3,
+                dataType:'html',
+                success:callback,
+            });
+            function callback(result){
+            	alert(result);
+             //$('#addRow1').html(result);                    
+            }	   		
+		}
+		function GotoPage(){
 	   		var loc = document.getElementById('ddlConfig').value;
 	   		if(loc!="0") window.location = loc;
 		}
@@ -302,19 +335,147 @@ if (!is_authed())
 					</ul>
 <!-- _______________________________________________Submit Form (SAVE or DEFAULT)________________________________________________ -->
 <!-- ____________________________________________________________________________________________________________________________ -->
-<?php
-					if (isset($_POST["default"])){				//DEFAULT (button)
-						$num1 = 1;	
-						$num2 = 0;  
-						$num3 = 1;	$priority1 = 1;
-						$num4 = 1;	$priority2 = 2;
-						$num5 = 0;	$priority3 = 3;
-						$num6 = 1;	$priority4 = 4;
-						$num7 = 0;	$priority5 = 5;
-						$num8 = 0;	$priority6 = 6;
-						$num9 = 0;	$priority7 = 7;
+<?php									
+//DEFAULT button ------------------------------------------------------------------------------------------------------- //					
+					if(isset($_POST["default"])){ 
+//Read	NAS ------------------------------------------------------------------------------------------------------------ //
+						$file1 = fopen("/home/hadoop/TESAPI/TESTSCRIPT/active_Nas.txt","r");
+						$lineNas = fgets($file1,1024);
+						$numAccNas = str_word_count($lineNas);
+						echo $numAccNas;
+						$countLoop = 2*$numAccNas-1;
+						$_SESSION["numAccSaveNas"] = $numAccNas;
+
+						$file1 = fopen("/home/hadoop/TESAPI/TESTSCRIPT/active_Nas.txt","r");
+						$countline=0;
+						while (!feof($file1))
+						{
+							$lineNas=fgets($file1,1024);
+							if($countline==0){
+								for($i=0;$i<$countLoop;$i++){
+									$lineNas[$i]=$lineNas[$i];
+								}
+							}
+							else if($countline==1){
+								for($i=0;$i<$countLoop;$i++){
+									$lineNas2[$i]=$lineNas[$i];
+								}
+							}
+							$countline++;
+						}
+						$index=0;
+						for($i=0;$i<$numAccNas;$i++){
+							list($accNas[$i]) = $lineNas2[$index];
+							$index=$index+2;
+						}
+//Read	Dropbox -------------------------------------------------------------------------------------------------------- //
+						$file2 = fopen("/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt","r");	
+						$lineDB = fgets($file2,1024);
+						$numAccDB = str_word_count($lineDB);
+						$countLoop = 2*$numAccDB-1;
+						$_SESSION["numAccSaveDB"] = $numAccDB;
+						
+						$file2 = fopen("/home/hadoop/TESAPI/TESTSCRIPT/active_Dropbox.txt","r");
+						$countline = 0;
+						while (!feof($file2))
+						{
+							$lineDB=fgets($file2,1024);
+							if($countline==0){
+								for($i=0;$i<$countLoop;$i++){
+									$lineDB[$i]=$lineDB[$i];
+								}
+							}
+							else if($countline==1){
+								for($i=0;$i<$countLoop;$i++){
+									$lineDB2[$i]=$lineDB[$i];
+								}
+							}
+							else if($countline==2) {
+								for($i=0;$i<$countLoop;$i++){
+									$lineDB3[$i]=$lineDB[$i];
+								}
+							}
+							$countline++;
+						}
+						$index=0;
+						for($i=0;$i<$numAccDB;$i++){
+							list($accDB[$i]) = $lineDB2[$index];
+							list($priDB[$i]) = $lineDB3[$index];
+							$index=$index+2;
+						}
+//Read	Google Drive --------------------------------------------------------------------------------------------------- //
+						$file3 = fopen("/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt","r");
+						$lineGG = fgets($file3,1024);
+						$numAccGG = str_word_count($lineGG);
+						$countLoop = 2*$numAccGG-1;
+						$_SESSION["numAccSaveGG"] = $numAccGG;
+
+						$file3 = fopen("/home/hadoop/TESAPI/TESTSCRIPT/active_GoogleDrive.txt","r");
+						$countline=0;
+						while (!feof($file3))
+						{
+							$lineGG=fgets($file3,1024);
+							if($countline==0){
+								for($i=0;$i<$countLoop;$i++){
+									$lineGG[$i]=$lineGG[$i];
+								}
+							}
+							else if($countline==1){
+								for($i=0;$i<$countLoop;$i++){
+									$lineGG2[$i]=$lineGG[$i];
+								}
+							}
+							else if($countline==2) {
+								for($i=0;$i<$countLoop;$i++){
+									$lineGG3[$i]=$lineGG[$i];
+								}
+							}
+							$countline++;
+						}
+						$index=0;
+						for($i=0;$i<$numAccGG;$i++){
+							list($accGG[$i]) = $lineGG2[$index];
+							list($priGG[$i]) = $lineGG3[$index];
+							$index=$index+2;
+						}
+//Read	Box ------------------------------------------------------------------------------------------------------------ //
+						$file4 = fopen("/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt","r");
+						$lineBox = fgets($file4,1024);
+						$numAccBox = str_word_count($lineBox);
+						$countLoop = 2*$numAccBox-1;
+						$_SESSION["numAccSaveBox"] = $numAccBox;
+
+						$file4 = fopen("/home/hadoop/TESAPI/TESTSCRIPT/active_Box.txt","r");
+						$countline=0;
+						while (!feof($file4))
+						{
+							$lineBox=fgets($file4,1024);							
+							if($countline==0){
+								for($i=0;$i<$countLoop;$i++){
+									$lineBox[$i]=$lineBox[$i];
+								}
+							}
+							else if($countline==1){
+								for($i=0;$i<$countLoop;$i++){
+									$lineBox2[$i]=$lineBox[$i];
+								}
+							}
+							else if($countline==2) {
+								for($i=0;$i<$countLoop;$i++){
+									$lineBox3[$i]=$lineBox[$i];
+								}
+							}
+							$countline++;
+						}
+						$index=0;
+						for($i=0;$i<$numAccBox;$i++){
+							list($accBox[$i]) = $lineBox2[$index];
+							list($priBox[$i]) = $lineBox3[$index];
+							$index=$index+2;							
+						}
 					}
-					else{										//SAVE (button)
+//SAVE button or 'No event' -------------------------------------------------------------------------------------------- //
+					else{										
 //W		NAS ------------------------------------------------------------------------------------------------------------ //
 						if (isset($_POST["nas1"])){
 							$allNas = array();
@@ -548,7 +709,8 @@ if (!is_authed())
 								<tr>
 									<th style="padding-right:17px">Nas <?php echo $i+1; ?>: </th> 
 									<th> <input type="text" id="nas<?php echo $i+1; ?>" name="nas<?php echo $i+1; ?>" maxlength="1" size="8" value=<?php echo $accNas[$i]; ?> ></th>
-									<td> 1=On, 0=Off</td>
+									<td> 1=On, 0=Off </td>
+									<!-- <td> <a id="nasdel<?php echo $i+1; ?>" name="nasdel<?php echo $i+1; ?>" href="#" onclick="selectNAS(<?php echo $i+1;?>);return false;"> <img width="15px" height="15px" style="margin-left: 10px;" src="images/cross.png"> </a> </td>  -->
 								</tr>
 <?php 						//echo $accNas[$i];
 							} 
@@ -574,6 +736,7 @@ if (!is_authed())
 									<td> 1=On, 0=Off</td> 
 									<th style="padding-left:70px">Set Priority:</th> 
 									<th> <input type="text" id="pri_drop<?php echo $i+1; ?>" name="pri_drop<?php echo $i+1; ?>" maxlength="1" size="8" value=<?php echo $priDB[$i]; ?> ></th>
+									<!-- <td> <a href="#"><img width="15px" height="15px" style="margin-left: 10px;" src="images/cross.png"> </a> </td> -->
 								</tr>						
 <?php 						//echo $accDB[$i]; echo $priDB[$i];
 							} 
@@ -599,6 +762,7 @@ if (!is_authed())
 									<td> 1=On, 0=Off</td> 
 									<th style="padding-left:70px">Set Priority:</th> 
 									<th> <input type="text" id="pri_google<?php echo $i+1; ?>" name="pri_google<?php echo $i+1; ?>" maxlength="1" size="8" value=<?php echo $priGG[$i]; ?> ></th>
+									<!-- <td> <a id="gdrivedel<?php echo $i+1; ?>" name="gdrivedel<?php echo $i+1; ?>" href="#" onclick="selectgdrive(<?php echo $i+1;?>);return false;"> <img width="15px" height="15px" style="margin-left: 10px;" src="images/cross.png"> </a> </td>  -->
 								</tr>
 <?php 						//echo $accGG[$i]; echo $priGG[$i];
 							} 
@@ -624,6 +788,7 @@ if (!is_authed())
 									<td> 1=On, 0=Off</td> 
 									<th style="padding-left:70px">Set Priority:</th> 
 									<th> <input type="text" id="pri_box<?php echo $i+1; ?>" name="pri_box<?php echo $i+1; ?>" maxlength="1" size="8" value=<?php echo $priBox[$i]; ?> ></th>
+									<!-- <td> <a href="#"><img width="15px" height="15px" style="margin-left: 10px;" src="images/cross.png"> </a> </td> -->
 								</tr>
 <?php 						//echo $accBox[$i]; echo $priBox[$i];
 							} 

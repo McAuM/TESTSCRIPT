@@ -25,7 +25,7 @@ do
   	minper=$(awk -F' ' '{ print $5 }' <<< $line)  	
 done < $path_conf
 
-total=206421377024
+total=154816032768
 qs=$(($maxper-medper))
 qs=$(($qs*$total))
 qs=$(($qs/100))

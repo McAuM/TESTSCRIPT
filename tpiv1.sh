@@ -39,6 +39,7 @@ createpathfile(){
 
 clear_start(){
  cs=$1
+ touch $path_temptxt
  rm -rf $path_lsr
  rm -rf $path_full
  rm -rf $path_tempfile
@@ -183,7 +184,7 @@ date2=$(date)
 
 #variable Configuration
 nqs=0 #now queue size
-total=206421377024  
+total=154816032768  
 $onoff # on-off
 $maxper #max use space (%)
 $medper #medium use space (%)
@@ -210,15 +211,15 @@ do
   	ltu=$(awk -F' ' '{ print $8 }' <<< $line)  	
   	mfs=$(awk -F' ' '{ print $9 }' <<< $line)   	
 done < $path_conf
-grate_yesterday=$(awk 'END{print}' $path_conf_grate)
+grate_yesterday=$(awk 'END{print}' $path_conf_grate | awk -F' ' '{ print $3 }')
+chkrun=$(awk 'END{print}' $path_conf_grate | awk -F' ' '{ print $NF }')
 
 	  checknumber $onoff
     checknumber $active
   	checknumber $maxper
   	checknumber $medper
   	checknumber $minper
-  	checknumber $grate
-    checknumber $grate_yesterday
+  	checknumber $grate    
   	checknumber $prob
   	checknumber $ltu
   	checknumber $mfs
@@ -233,15 +234,14 @@ grate_yesterday=$(awk 'END{print}' $path_conf_grate)
   echo -ne "Waiting for initial..."
    
   #read local space to nowspaceper
-  caluseper 100
-  grate_yesterday=$(($nowspaceper-$grate_yesterday))  
+  caluseper 100  
   # tran mb to byte
   tobyte $mfs
   mfs=$outbyte  
   qs=$(($nowspaceper-medper))
   qs=$(($qs*$total))
   qs=$(($qs/100))
-  qs=$(($qs/5))  
+  qs=$(($qs/4))  
   echo "[OK]"        
 
   flag=0
@@ -249,19 +249,19 @@ grate_yesterday=$(awk 'END{print}' $path_conf_grate)
   then
     echo "TPSI mode is >>off<<"
   else
-    if [ "$grate_yesterday" -ge "$grate" ]
+    if [ "$grate_yesterday" -ge "$grate" ] && [ "$chkrun" -eq 0 ]
     then      
       #change que size      
       qs=$(($maxper-medper))
       qs=$(($qs*$total))
       qs=$(($qs/100))
-      qs=$(($qs/5))  
+      qs=$(($qs/4))  
       flag=1           
     fi
 
     if [ "$nowspaceper" -lt "$maxper" ] && [ "$flag" -eq 0 ]
     then
-      echo "less then 'space use' configure"            
+      echo "less than 'space use' configure"          
     else
       cmd=""      
       echo "6666666666" > /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt            
@@ -465,7 +465,8 @@ grate_yesterday=$(awk 'END{print}' $path_conf_grate)
               if [ "$day" -lt "$ltu" ] #check Last Update
               then
                 free1 2 #don't get file less than ltu
-                echo "SKIP -- lastupdate -- $line"
+                echo "SKIP -- less than last update time -- $line"
+                echo "SKIP -- less than last update time -- $line" >> $path_log
               else
                 # check max file size
                 size=$($hadoophome dfs -dus $line)
@@ -477,6 +478,7 @@ grate_yesterday=$(awk 'END{print}' $path_conf_grate)
                   then
                       free1 3 # overload size
                       echo "SKIP -- oversize -- $line"
+                      echo "SKIP -- oversize -- $line" >> $path_log
                   else                    
                     cutfile $line #a only fliename
                     cutfolder $line #b2 no /

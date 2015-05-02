@@ -18,6 +18,7 @@ free1(){
 
 clear_start(){
  cs=$1
+ touch $path_temptxt
  rm -rf $path_tempfile
  mkdir $path_tempfile
  return 1
@@ -148,7 +149,7 @@ date2=$(date)
 
 #variable Configuration
 nqs=0 #now queue size
-total=206421377024 
+total=154816032768 
 $onoff # on-off
 $maxper #max use space (%)
 $medper #medium use space (%)
@@ -204,7 +205,7 @@ done < $path_conf
   qs=$((medper - nowspaceper))  
   qs=$(($qs * $total))
   qs=$(($qs/100))
-  qs=$(($qs/5))
+  qs=$(($qs/4))
   echo "[OK]"  
   #echo "now spaceper is: $nowspaceper"
   #echo "que size is : $qs"  
@@ -219,7 +220,7 @@ done < $path_conf
   else
     if [ "$nowspaceper" -gt "$minper" ]
     then
-      echo "More then 'space use' configure"      
+      echo "More than 'space use' configure"      
     else      
       echo "START PROCESS"
       cmd=""
@@ -467,10 +468,11 @@ done < $path_conf
             
             #check Last Update
             caldate $date $nowdatesystem
-            if [ "$day" -lt "$ltu" ] # not Complete
+            if [ "$day" -gt "$ltu" ] 
             then
               free1 2 #don't get file more than ltu
-              echo "SKIP -- lastupdate -- $line"
+              echo "SKIP -- more than last update time -- $line" 
+              echo "SKIP -- more than last update time -- $line" >> $path_log 
             else
               #check Max File Size
               if [ "$nqs" -le "$qs" ] 
@@ -479,6 +481,7 @@ done < $path_conf
                 then
                   free1 3 # overload size
                   echo "SKIP -- oversize -- $line"
+                  echo "SKIP -- oversize -- $line" >> $path_log                  
                 else
                   #START MOVE                  
                   cutfile $line # cut file 
