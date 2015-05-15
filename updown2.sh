@@ -32,16 +32,14 @@ do
      if [ "$word" -ne "0" ];then
      	if [ "$i" -eq 0 ]; then
      		#chper=81
-     		chper=$(java -jar $path_Box space $count | grep -i "used" | awk -F ' ' '{print $6}')
+     		chper=$(java -jar $path_Box space $count | grep -i "used" | awk -F ' ' '{print $9}')
      	elif [ "$i" -eq 1 ]; then
      		#chper=81
-     		chper=$(java -jar $path_Dbox space $tfile$count | grep -i "used" | awk -F ' ' '{print $6}')
+     		chper=$(java -jar $path_Dbox space $tfile$count | grep -i "used" | awk -F ' ' '{print $9}')
      	elif [ "$i" -eq 2 ]; then
      		#chper=81     		
-     		chper=$(java -jar $path_Gdrive space $count | grep -i "used" | awk -F ' ' '{print $6}')     		
-     	fi
-     	tobyte $chper
-        chper=$outbyte    	
+     		chper=$(java -jar $path_Gdrive space $count | grep -i "used" | awk -F ' ' '{print $9}')     		
+     	fi     	    	
      	if [ "$chper" -gt 0 ]; then
             account[$count2]=$count
             count2=$((count2+1))

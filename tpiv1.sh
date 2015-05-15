@@ -91,6 +91,7 @@ caldate(){
 
 caluseper(){
  caluseperper2=$1
+ touch $path_temptxt
  $hadoophome dfsadmin -report > $path_temptxt
  nowspaceper=0
  while read line || [ -n "$line" ]
@@ -184,7 +185,7 @@ date2=$(date)
 
 #variable Configuration
 nqs=0 #now queue size
-total=154816032768  
+total=154816032768      
 $onoff # on-off
 $maxper #max use space (%)
 $medper #medium use space (%)
@@ -239,11 +240,12 @@ chkrun=$(awk 'END{print}' $path_conf_grate | awk -F' ' '{ print $NF }')
   tobyte $mfs
   mfs=$outbyte  
   qs=$(($nowspaceper-medper))
+  echo "space: $qs"
   qs=$(($qs*$total))
   qs=$(($qs/100))
-  qs=$(($qs/4))  
+  qs=$(($qs/3))  
   echo "[OK]"        
-
+  echo "quesize: $qs"
   flag=0
   if [ "$onoff" -eq "0" ]
   then
@@ -255,7 +257,7 @@ chkrun=$(awk 'END{print}' $path_conf_grate | awk -F' ' '{ print $NF }')
       qs=$(($maxper-medper))
       qs=$(($qs*$total))
       qs=$(($qs/100))
-      qs=$(($qs/4))  
+      qs=$(($qs/3))  
       flag=1           
     fi
 
@@ -449,7 +451,7 @@ chkrun=$(awk 'END{print}' $path_conf_grate | awk -F' ' '{ print $NF }')
         ########################## CHOOSE FILE ##############################                
         while read line || [ -n "$line" ]
         do
-          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ] #|| [ `echo "$line" | grep -c "54211536" ` -gt 0 ]
+          if [ `echo "$line" | grep -c "54211536" ` -gt 0 ] #|| [ `echo "$line" | grep -c "54211536" ` -gt 0 ]
           then          
             if [ `echo "$line" | grep -c "/user/hadoop/.Trash" ` -gt 0 ] || [ `echo "$line" | grep -c "/user/hadoop/.Revision" ` -gt 0 ]
             then
@@ -495,8 +497,7 @@ chkrun=$(awk 'END{print}' $path_conf_grate | awk -F' ' '{ print $NF }')
                       then
                         echo "SKIP -- file already in cloud in $line"                          
                         echo "SKIP -- file already in cloud in $line" >> $path_log
-                      else                        
-                        nqs=$(($nqs + $size_of_file))                                              
+                      else                                                                                              
                         # START TO MOVE
                         if [ "$nonas" -eq 0 ]
                         then
@@ -537,6 +538,7 @@ chkrun=$(awk 'END{print}' $path_conf_grate | awk -F' ' '{ print $NF }')
                         fi                      
                         $hadoophome dfs -rm $cut_b2
                         $hadoophome dfs -touchz $cut_b2
+                        nqs=$(($nqs + $size_of_file))
                         #echo "8888888" >> /home/hadoop/TESAPI/TESTSCRIPT/tmpppp.txt 
                       fi                      
                     else                      

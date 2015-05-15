@@ -136,20 +136,20 @@ path_file_Dbox="/home/hadoop/TESAPI/TESTSCRIPT/in_Dbox"
 path_file_gdrive="/home/hadoop/TESAPI/TESTSCRIPT/in_gdrive" 
 path_toupload="wait to change"
 
-path_temptxt="/home/hadoop/TESAPI/TESTSCRIPT/temp.txt"
-path_tempfile="/home/hadoop/TESAPI/TESTSCRIPT/tempfile/"
+path_temptxt="/home/hadoop/TESAPI/TESTSCRIPT/temp_2.txt"
+path_tempfile="/home/hadoop/TESAPI/TESTSCRIPT/tempfile_2/"
 
 date_log=$(date +"%Y-%m-%d")
 path_log_NAS="/home/hadoop/hadoop-1.0.4/logs/tpi/NAS/log-nas-$date_log-download.log"
 path_log_box="/home/hadoop/hadoop-1.0.4/logs/tpi/Box/log-box-$date_log-download.log"
 path_log_Dbox="/home/hadoop/hadoop-1.0.4/logs/tpi/Dropbox/log-dropbox-$date_log-download.log"
 path_log_gdrive="/home/hadoop/hadoop-1.0.4/logs/tpi/GoogleDrive/log-gdrive-$date_log-download.log"
-path_blanktext="/home/hadoop/TESAPI/TESTSCRIPT/blank_text.txt"
+path_blanktext="/home/hadoop/TESAPI/TESTSCRIPT/blank_text_2.txt"
 date2=$(date) 
 
 #variable Configuration
 nqs=0 #now queue size
-total=154816032768 
+total=154816032768   
 $onoff # on-off
 $maxper #max use space (%)
 $medper #medium use space (%)
@@ -205,7 +205,7 @@ done < $path_conf
   qs=$((medper - nowspaceper))  
   qs=$(($qs * $total))
   qs=$(($qs/100))
-  qs=$(($qs/4))
+  qs=$(($qs/3))
   echo "[OK]"  
   #echo "now spaceper is: $nowspaceper"
   #echo "que size is : $qs"  
@@ -235,12 +235,8 @@ done < $path_conf
       for word in $line 
       do 
         if [ "$word" -ne 0 ]; then      
-          chper=$(sh $path_Nas usespace $count1 /Data | grep -i "used" | awk -F ' ' '{print $6}')
-          tobyte $chper
-          chper=$outbyte                
-          if [ "$chper" -gt 0 ];then
-          #if [ "$chper" -lt 80 ];then
-
+          chper=$(sh $path_Nas usespace $count1 /Data | grep -i "used" | awk -F ' ' '{print $9}')                          
+          if [ "$chper" -gt 0 ];then          
               nonas=0
               break
           fi
@@ -290,10 +286,7 @@ done < $path_conf
                     if [ "$word" = "${prisort[$p]}" ] && [ "$word" -ne 0  ];then
                       if [ "$i" -eq 0 ];then #Choose Box                   
                         #check usespaceper
-                        chper=$(java -jar $path_Box space $count2 | grep -i "used" | awk -F ' ' '{print $6}')
-                        tobyte $chper
-                        chper=$outbyte 
-                        #chper=0                                         
+                        chper=$(java -jar $path_Box space $count2 | grep -i "used" | awk -F ' ' '{print $9}')                                                                                       
                         if [ "$chper" -gt 0 ];then
                           Path_java=$path_Box
                           flag=1                  
@@ -304,9 +297,7 @@ done < $path_conf
                         fi
                       elif [ "$i" -eq 1 ];then #Choose Dropbox                          
                         #check usespaceper          
-                        chper=$(java -jar $path_Dbox space $tfile$count2 | grep -i "used" | awk -F ' ' '{print $6}')                                          
-                        tobyte $chper
-                        chper=$outbyte 
+                        chper=$(java -jar $path_Dbox space $tfile$count2 | grep -i "used" | awk -F ' ' '{print $9}')                                                                   
                         #chper=0
                         if [ "$chper" -gt 0 ];then
                           Path_java=$path_Dbox
@@ -318,9 +309,7 @@ done < $path_conf
                         fi         
                       elif [ "$i" -eq 2 ];then #Choose GoogleDrive          
                         #check usespaceper                                      
-                        chper=$(java -jar $path_Gdrive space $count2 | grep -i "used" | awk -F ' ' '{print $6}')                                          
-                        tobyte  $chper
-                        chper=$outbyte
+                        chper=$(java -jar $path_Gdrive space $count2 | grep -i "used" | awk -F ' ' '{print $9}')                                                                  
                         #chper=0
                         if [ "$chper" -gt 0 ];then
                           Path_java=$path_Gdrive
@@ -435,7 +424,7 @@ done < $path_conf
       #echo "path full $path_full"
       while read line
         do
-          if [ `echo "$line" | grep -c "54211534" ` -gt 0 ] 
+          if [ `echo "$line" | grep -c "54211536" ` -gt 0 ] 
           then             
             echo "CHECKING... -- $line"
             # Get Date and File Size                          
@@ -445,7 +434,8 @@ done < $path_conf
             then
               if [ "$Path_java" =  "$path_Box" ]; then  
                 size=$(echo "$result" | grep -i "Size" | awk -F ' ' '{print $2}')
-                date=$(echo "$result" | grep -i "Date" | awk -F ' ' '{print $2}' )
+                date=$(echo "$result" | grep -i "Date" )
+                date=${date:6}
                 date=$(date +%F -d "$date")
               elif [ "$Path_java" =  "$path_Dbox" ]; then
                 size=$(echo "$result" | grep -i "numBytes" | awk -F ' ' '{print $3}')
@@ -457,14 +447,14 @@ done < $path_conf
                 date=$(echo "$result" | grep -i "Date" | awk -F ' ' '{print $2}')
                 date=${date:0:10}
               fi                          
-            else
-              #Not Complete              
+            else                        
               size=$(echo "$result" | grep -i "Size" | awk -F ' ' '{print $2}')
-              date=$(echo "$result" | grep -i "Date" | awk -F ' ' '{print $2}')              
+              date=$(echo "$result" | grep -i "Date") 
+              date=${date:6}             
               date=$(date +%F -d "$date")
             fi            
-            #echo "Size: $size"
-            #echo "Date: $date"
+            echo "Size: $size"
+            echo "Date: $date"
             
             #check Last Update
             caldate $date $nowdatesystem
@@ -535,6 +525,7 @@ done < $path_conf
                     else                                        
                       eval "$cmd3 $id "                      
                     fi
+                    nqs=$(($nqs + $size))
                   else
                     echo "Error to move file to Hadoop --- $line"
                     echo "Error to move file to Hadoop --- $line" >> $path_log

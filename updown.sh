@@ -25,11 +25,11 @@ do
   	minper=$(awk -F' ' '{ print $5 }' <<< $line)  	
 done < $path_conf
 
-total=154816032768
+total=154816032768  
 qs=$(($maxper-medper))
 qs=$(($qs*$total))
 qs=$(($qs/100))
-qs=$(($qs/5))
+qs=$(($qs/3))
 
 dd if=/dev/zero of=/home/hadoop/TESAPI/TESTSCRIPT/upload_test bs=1M count=5
 
